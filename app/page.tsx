@@ -1,69 +1,190 @@
-import Image from "next/image";
+﻿'use client';
+
+import { signOut, useSession } from 'next-auth/react';
+import { useEffect, useMemo, useState } from 'react';
+import { Building2, CalendarDays, Route } from 'lucide-react';
+
+import { HeaderBar } from '@/components/home/HeaderBar';
+import { OverviewPanel } from '@/components/home/OverviewPanel';
+import { QuickAccessPanel } from '@/components/home/QuickAccessPanel';
+import { SearchSidebar } from '@/components/home/SearchSidebar';
+import { SelectedLocationCard } from '@/components/home/SelectedLocationCard';
+import { campusLocations } from '@/lib/mockData';
+
+type CampusLocation = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  tag: string;
+};
+
+type RoomRecord = {
+  id: string;
+  name: string;
+  code: string;
+  floor: string;
+  capacity: number;
+  isAvailable?: boolean;
+  description?: string;
+};
+
+type DashboardBooking = {
+  id: string;
+  purpose: string;
+  room: string;
+  roomCode: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  date: string;
+  startTime: string;
+  endTime: string;
+};
+
+const getLocalDateKey = (date: Date) => {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+};
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const [selectedDestination, setSelectedDestination] = useState<CampusLocation>(campusLocations[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rooms, setRooms] = useState<RoomRecord[]>([]);
+  const [bookings, setBookings] = useState<DashboardBooking[]>([]);
+
+  const isAuthenticated = status === 'authenticated';
+  const userName = session?.user?.name || 'Student';
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadHomeData = async () => {
+      try {
+        const todayKey = getLocalDateKey(new Date());
+        const roomsResponse = await fetch(`/api/rooms?date=${todayKey}&start=09:00&end=17:00`, {
+          signal: controller.signal,
+        });
+
+        if (!roomsResponse.ok) {
+          throw new Error('Unable to load campus room data');
+        }
+
+        const roomsData = await roomsResponse.json();
+        const nextRooms = Array.isArray(roomsData.rooms) ? roomsData.rooms : [];
+        setRooms(nextRooms);
+
+        if (!isAuthenticated) {
+          setBookings([]);
+          return;
+        }
+
+        const overviewResponse = await fetch('/api/dashboard/overview', { signal: controller.signal });
+        if (!overviewResponse.ok) {
+          throw new Error('Unable to load dashboard overview');
+        }
+
+        const overviewData = await overviewResponse.json();
+        setBookings(Array.isArray(overviewData.bookings) ? overviewData.bookings : []);
+      } catch {
+        setRooms([]);
+        setBookings([]);
+      }
+    };
+
+    void loadHomeData();
+
+    return () => controller.abort();
+  }, [isAuthenticated, status]);
+
+  const availableRoomsCount = useMemo(
+    () => rooms.filter((room) => room.isAvailable !== false).length,
+    [rooms]
+  );
+
+  const todayBookings = useMemo(
+    () => bookings.filter((booking) => booking.date === getLocalDateKey(new Date())).slice(0, 3),
+    [bookings]
+  );
+
+  const quickStats = useMemo(
+    () => [
+      {
+        label: 'Rooms free',
+        value: String(availableRoomsCount || 0),
+        icon: Building2,
+        tone: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/20',
+      },
+      {
+        label: 'Classes today',
+        value: String(todayBookings.length),
+        icon: CalendarDays,
+        tone: 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/20',
+      },
+      {
+        label: 'Walk time',
+        value: `${Math.max(5, Math.min(18, 5 + Math.max(0, 8 - availableRoomsCount)))} min`,
+        icon: Route,
+        tone: 'bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/20',
+      },
+    ],
+    [availableRoomsCount, todayBookings.length]
+  );
+
+  const upcoming = useMemo(
+    () =>
+      todayBookings.length
+        ? todayBookings.map((booking) => ({
+            title: booking.purpose,
+            time: booking.startTime,
+            room: `${booking.room} · ${booking.roomCode}`,
+          }))
+        : [{ title: 'No bookings today', time: 'Open schedule', room: 'Free to reserve a room' }],
+    [todayBookings]
+  );
+
+  const filteredLocations = useMemo(
+    () =>
+      campusLocations.filter((loc) =>
+        `${loc.name} ${loc.tag}`.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [searchQuery]
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="portal-shell min-h-screen text-[#152238]">
+      <div className="mx-auto max-w-[1600px] pt-4 px-4 pb-30 md:p-6">
+        <HeaderBar
+          userName={userName}
+          isAuthenticated={isAuthenticated}
+          onLogout={() => signOut({ callbackUrl: '/' })}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
+          <SearchSidebar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            locations={filteredLocations}
+            selectedLocationId={selectedDestination.id}
+            onSelectLocation={setSelectedDestination}
+          />
+
+          <OverviewPanel selectedDestination={selectedDestination} quickStats={quickStats} />
+
+          <aside className="space-y-6">
+            <QuickAccessPanel upcoming={upcoming} />
+            <SelectedLocationCard
+              selectedDestination={{
+                name: selectedDestination.name,
+                tag: selectedDestination.tag,
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </aside>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

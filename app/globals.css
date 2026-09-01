@@ -1,26 +1,142 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Core - Emerald Theme */
+  --emerald-primary: oklch(62.7% 0.194 149.214); /* Primary Emerald */
+  --emerald-dark: oklch(52% 0.18 150);           /* Dark Emerald */
+  --emerald-light: oklch(75% 0.12 150);          /* Light Emerald */
+  --emerald-pale: oklch(95% 0.02 150);           /* Pale Emerald Background */
+
+  /* Neutral Surface System - Modern White */
+  --background: oklch(100% 0 0);                /* Pure White */
+  --background-secondary: oklch(98% 0.001 0);   /* Off White */
+  --foreground: oklch(20% 0.03 0);              /* Deep Charcoal Text */
+  --foreground-secondary: oklch(40% 0.02 0);    /* Medium Gray Text */
+  --portal-border: oklch(90% 0.01 0);           /* Light Gray Border */
+  --portal-muted: oklch(55% 0.01 0);            /* Muted Gray Text */
+  --portal-card: oklch(100% 0 0 / 95%);         /* Glassmorphism Panel - White */
+}
+
+/* Dark Mode Token Overrides */
+.dark,
+[data-theme="dark"] {
+  --background: oklch(12% 0.02 0);
+  --background-secondary: oklch(16% 0.02 0);
+  --foreground: oklch(95% 0.01 0);
+  --foreground-secondary: oklch(75% 0.01 0);
+  --portal-border: oklch(25% 0.02 0);
+  --portal-muted: oklch(60% 0.01 0);
+  --portal-card: oklch(14% 0.02 0 / 90%);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-emerald-primary: var(--emerald-primary);
+  --color-emerald-dark: var(--emerald-dark);
+  --color-emerald-light: var(--emerald-light);
+  --color-emerald-pale: var(--emerald-pale);
+  --color-portal-border: var(--portal-border);
+  --color-portal-muted: var(--portal-muted);
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base Body Styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Text Selection Accent */
+::selection {
+  background-color: var(--emerald-accent);
+  color: oklch(100% 0 0);
+}
+
+/* Component Classes */
+.portal-shell {
+  background: 
+    radial-gradient(circle at top right, oklch(62.7% 0.194 149.214 / 4%), transparent 400px),
+    linear-gradient(180deg, oklch(62.7% 0.194 149.214 / 2%), transparent 240px),
+    var(--background);
+}
+
+.portal-header {
+  border-top: 4px solid var(--emerald-primary);
+  border-bottom: 1px solid var(--portal-border);
+  background-color: var(--portal-card);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.portal-panel {
+  border: 1px solid var(--portal-border);
+  background-color: var(--portal-card);
+  box-shadow: 0 10px 30px -10px oklch(62.7% 0.194 149.214 / 8%);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.portal-label {
+  color: var(--foreground);
+}
+
+.dark .portal-label {
+  color: var(--foreground);
+}
+
+.portal-accent {
+  color: var(--emerald-primary);
+}
+
+.portal-emerald {
+  color: var(--emerald-accent);
+}
+
+.portal-button {
+  background-color: var(--emerald-primary);
+  color: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.portal-button:hover {
+  background-color: var(--emerald-dark);
+  box-shadow: 0 4px 14px oklch(62.7% 0.194 149.214 / 30%);
+}
+
+.portal-button-accent {
+  background-color: var(--emerald-primary);
+  color: white;
+}
+
+.portal-button-accent:hover {
+  background-color: var(--emerald-dark);
+  box-shadow: 0 4px 14px oklch(62.7% 0.194 149.214 / 35%);
+}
+
+.portal-field {
+  border: 1px solid var(--portal-border);
+  background-color: var(--background-secondary);
+  color: var(--foreground);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-field:focus {
+  outline: none;
+  border-color: var(--emerald-primary);
+  box-shadow: 0 0 0 3px oklch(62.7% 0.194 149.214 / 15%);
+}
+
+.portal-field::placeholder {
+  color: var(--portal-muted);
 }

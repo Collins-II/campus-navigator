@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Campus commerce and DPO
+
+Authenticated students can use `/commerce` to purchase campus services. Checkout creates a pending order, requests a hosted DPO payment token, and redirects the student to DPO. Configure these server-side variables before enabling live checkout:
+
+```env
+DPO_COMPANY_TOKEN=your-company-token
+DPO_CURRENCY=ZMW
+# Optional: use the DPO sandbox/API endpoint supplied for your account
+DPO_API_URL=https://secure.3gdirectpay.com/API/v6/
+```
+
+Configure DPO to POST payment notifications to `/api/commerce/callback`. The callback marks the matching order as `paid` only when DPO returns result `000`; no card data is stored by this application.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
