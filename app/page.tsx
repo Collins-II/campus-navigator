@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -224,10 +224,10 @@ export default function Home() {
       <header className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center justify-between gap-3 p-4 md:p-6">
         <Link
           href="/"
-          className="pointer-events-auto flex items-center gap-2.5 border-b-[3px] border-[#008236] bg-black py-1.5 pl-1.5 pr-4 shadow-lg shadow-black/30"
+          className="pointer-events-auto flex items-center gap-2.5 border-b-[3px] border-[#0d7739] bg-transparent backdrop-blur-md py-1.5 pl-1.5 pr-4 shadow-lg shadow-black/30"
         >
           <Image src="/images/unza_logo.jpg" width={36} height={36} alt="UNZA" className="rounded-full" />
-          <span className="text-sm font-black uppercase tracking-wider text-white">Campus<span className="text-[#4ade80]">Nav</span></span>
+          <span className="text-sm font-black uppercase tracking-wider text-[#0d7739]">UNZA<span className="text-black">Nav</span></span>
         </Link>
 
         <div className="pointer-events-auto flex items-center gap-2">

@@ -16,10 +16,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Campus Navigator", template: "%s | Campus Navigator" },
+  title: { default: "UNZA Navigator", template: "%s | UNZA Navigator" },
   description: "Modern campus navigation and booking application",
-  applicationName: "Campus Navigator",
-  appleWebApp: { capable: true, title: "Campus", statusBarStyle: "black-translucent" },
+  applicationName: "UNZA Navigator",
+  appleWebApp: { capable: true, title: "UNZA", statusBarStyle: "black-translucent" },
    icons: {
     icon: [
       { url: "/images/unza_logo.jpg", type: "image/jpg", sizes: "32x32" },

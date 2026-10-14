@@ -334,11 +334,11 @@ export default function DashboardPage() {
           </aside>
 
           <section className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-3">
               {stats.map((stat) => (
                 <div key={stat.label} className="border-2 border-black bg-white p-4">
-                  <div className="text-5xl font-black tabular-nums leading-none text-[#008236]">{stat.value}</div>
-                  <div className="mt-2 text-[11px] font-black uppercase tracking-widest text-black">{stat.label}</div>
+                  <div className="text-2xl md:text-5xl font-black tabular-nums leading-none text-[#008236]">{stat.value}</div>
+                  <div className="mt-2 text-[8px] md:text-[11px] font-black uppercase tracking-widest text-black">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -394,7 +394,7 @@ export default function DashboardPage() {
               <AvailableRoomsPanel rooms={rooms} />
             </div>
 
-            <div className="rounded-md border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/20">
+            <div className="rounded-md border border-gray-200 bg-white mb-20 md:mb-0 p-5 shadow-xl shadow-gray-200/20">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.2em] text-violet-700">Bookings</p>

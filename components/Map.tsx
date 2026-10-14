@@ -152,7 +152,7 @@ export default function Map({
   markers = [],
   userLocation: initialUserLocation,
   showUserLocation = true,
-  className = 'h-[500px] rounded-[26px] border border-gray-300 shadow-md',
+  className = 'h-[500px] rounded-none md:rounded-[26px] border border-gray-300 shadow-md',
   onSelect,
   onRoute,
   profile = 'foot',
