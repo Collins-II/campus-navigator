@@ -38,6 +38,21 @@ export async function createDpoCheckout(input: DpoCheckoutInput) {
   return { token, paymentUrl: `${DPO_PAYMENT_URL}?ID=${encodeURIComponent(token)}` };
 }
 
+export async function verifyDpoToken(token: string) {
+  const companyToken = process.env.DPO_COMPANY_TOKEN;
+  if (!companyToken || !token) return { paid: false, transactionId: "", result: "" };
+
+  const xml = `<?xml version="1.0" encoding="utf-8"?><API3G><CompanyToken>${escapeXml(companyToken)}</CompanyToken><Request>verifyToken</Request><TransactionToken>${escapeXml(token)}</TransactionToken></API3G>`;
+  const response = await fetch(DPO_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/xml" }, body: xml, cache: "no-store" });
+  const responseXml = await response.text();
+  const result = readXmlValue(responseXml, "Result");
+  return {
+    paid: response.ok && result === "000",
+    transactionId: readXmlValue(responseXml, "TransactionApproval") || readXmlValue(responseXml, "TransactionRef"),
+    result,
+  };
+}
+
 export async function parseDpoCallback(request: Request) {
   const body = await request.text();
   const params = new URLSearchParams(body);

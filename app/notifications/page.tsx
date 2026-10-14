@@ -54,32 +54,33 @@ export default function NotificationsPage() {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-white pb-28">
       {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <div className="sticky top-0 z-40 border-b-[3px] border-[#008236] bg-black text-white">
+        <div className="max-w-4xl mx-auto px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/dashboard"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Back"
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                <p className="text-sm text-gray-500 mt-1">
+                <h1 className="text-3xl font-black uppercase leading-none tracking-tight">Notifications</h1>
+                <p className="mt-1 text-xs font-bold uppercase tracking-widest text-[#4ade80]">
                   {unreadCount > 0
-                    ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
+                    ? `${unreadCount} unread`
                     : 'All caught up!'}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setPreferencesOpen(true)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="border-2 border-white px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white hover:bg-white hover:text-black"
             >
-              Preferences
+              Prefs
             </button>
           </div>
         </div>
@@ -93,30 +94,30 @@ export default function NotificationsPage() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-full border-[1.5px] border-black transition-colors ${
                 filter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
               }`}
             >
               All
             </button>
             <button
               onClick={() => setFilter('unread')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-full border-[1.5px] border-black transition-colors ${
                 filter === 'unread'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
               }`}
             >
               Unread ({unreadCount})
             </button>
             <button
               onClick={() => setFilter('read')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-full border-[1.5px] border-black transition-colors ${
                 filter === 'read'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
               }`}
             >
               Read
@@ -128,7 +129,7 @@ export default function NotificationsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -137,7 +138,7 @@ export default function NotificationsPage() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
               >
                 Mark All as Read
               </button>
@@ -150,7 +151,7 @@ export default function NotificationsPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-2" />
                 <p className="text-gray-500">Loading notifications...</p>
               </div>
             </div>
@@ -204,9 +205,9 @@ function NotificationCard({
 
   return (
     <div
-      className={`rounded-lg border transition-all ${
+      className={`rounded border-2 transition-all ${
         !notification.isRead
-          ? 'bg-blue-50 border-blue-200'
+          ? 'bg-white border-black border-l-4 border-l-[#008236]'
           : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
     >
@@ -236,7 +237,7 @@ function NotificationCard({
                 {notification.actionUrl && (
                   <a
                     href={notification.actionUrl}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-xs text-emerald-700 hover:text-emerald-800 font-medium"
                   >
                     {notification.actionLabel || 'View Details'}
                   </a>

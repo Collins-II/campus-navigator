@@ -91,24 +91,24 @@ export function NotificationPreferencesModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+    <div className="ui-modal-backdrop">
+      <div className="ui-modal !p-0 max-w-md">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-black bg-white px-5 py-4">
+          <h2 className="text-xl font-black uppercase tracking-tight text-black">
             Notification Preferences
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-black hover:bg-black hover:text-white"
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">
+        <div className="px-5 py-4">
           {loading ? (
             <div className="flex items-center justify-center h-32">
               <Loader className="w-5 h-5 text-gray-400 animate-spin" />
@@ -127,7 +127,7 @@ export function NotificationPreferencesModal({
                   type="checkbox"
                   checked={preferences.email}
                   onChange={() => handleToggle("email")}
-                  className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+                  className="w-6 h-6 accent-[#008236] cursor-pointer"
                 />
               </div>
 
@@ -143,7 +143,7 @@ export function NotificationPreferencesModal({
                   type="checkbox"
                   checked={preferences.sms}
                   onChange={() => handleToggle("sms")}
-                  className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+                  className="w-6 h-6 accent-[#008236] cursor-pointer"
                 />
               </div>
 
@@ -159,7 +159,7 @@ export function NotificationPreferencesModal({
                   type="checkbox"
                   checked={preferences.push}
                   onChange={() => handleToggle("push")}
-                  className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+                  className="w-6 h-6 accent-[#008236] cursor-pointer"
                 />
               </div>
 
@@ -175,7 +175,7 @@ export function NotificationPreferencesModal({
                   type="checkbox"
                   checked={preferences.weeklyDigest}
                   onChange={() => handleToggle("weeklyDigest")}
-                  className="w-5 h-5 text-blue-600 rounded cursor-pointer"
+                  className="w-6 h-6 accent-[#008236] cursor-pointer"
                 />
               </div>
 
@@ -199,17 +199,17 @@ export function NotificationPreferencesModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-2 justify-end">
+        <div className="sticky bottom-0 flex gap-2 border-t-2 border-black bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="ui-btn ui-btn-secondary flex-1"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-2"
+            className="ui-btn ui-btn-primary flex-1"
           >
             {saving && <Loader className="w-4 h-4 animate-spin" />}
             {saving ? "Saving..." : "Save"}

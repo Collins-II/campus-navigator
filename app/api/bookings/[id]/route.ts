@@ -63,7 +63,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     if (body.status) {
-      booking.status = body.status;
+      // Staff confirm bookings in the campus admin app; students can only cancel.
+      if (body.status !== "cancelled" && body.status !== booking.status) {
+        return NextResponse.json({ error: "You can only cancel your own bookings." }, { status: 403 });
+      }
+      if (body.status === "cancelled") {
+        booking.status = "cancelled";
+      }
     }
 
     await booking.save();

@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { MobileNav } from "@/components/MobileNav";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,13 +16,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Campus Navigator",
+  title: { default: "Campus Navigator", template: "%s | Campus Navigator" },
   description: "Modern campus navigation and booking application",
+  applicationName: "Campus Navigator",
+  appleWebApp: { capable: true, title: "Campus", statusBarStyle: "black-translucent" },
    icons: {
     icon: [
       { url: "/images/unza_logo.jpg", type: "image/jpg", sizes: "32x32" },
-    ]
+    ],
+    apple: [{ url: "/images/icon-192.png", sizes: "192x192", type: "image/png" }],
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#052e16",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -34,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           {children}
           <MobileNav />
+          <InstallPrompt />
         </Providers>
       </body>
     </html>

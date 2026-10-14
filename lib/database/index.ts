@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import dns from "dns";
 
 // Prefer public DNS resolution for Atlas SRV lookups when the runtime network is restricted.
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const MONGODB_URI = (
   process.env.MONGODB_URI ||

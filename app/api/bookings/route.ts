@@ -37,7 +37,7 @@ export async function GET() {
         return {
           id: String(booking._id ?? "booking-id"),
           purpose: booking.purpose,
-          room: typeof booking.room === "object" && booking.room ? booking.room.name || "Main Library" : booking.room || "Main Library",
+          room: typeof booking.room === "object" && booking.room ? booking.room.name || "Unknown room" : booking.room || "Unknown room",
           roomCode: typeof booking.room === "object" && booking.room ? booking.room.code || "L1" : "L1",
           status: booking.status,
           date: getLocalDateKey(start),
@@ -63,10 +63,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "Campus coordination";
-    const roomName = typeof body.room === "string" ? body.room.trim() : "Main Library";
+    const roomName = typeof body.room === "string" ? body.room.trim() : "";
     const startTime = body.startTime ? new Date(body.startTime) : new Date();
     const endTime = body.endTime ? new Date(body.endTime) : new Date(Date.now() + 60 * 60 * 1000);
-    const status = body.status || "pending";
+    const status = "pending";
 
     if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
       return NextResponse.json({ error: "A valid start and end time is required." }, { status: 400 });

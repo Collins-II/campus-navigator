@@ -3,14 +3,18 @@ import mongoose, { Schema, type Document } from "mongoose";
 export interface IRoom extends Document {
   name: string;
   code: string;
-  floor: string;
-  capacity: number;
-  equipment: string[];
+  building: string;
+  floor?: number;
+  capacity?: number;
+  category: string;
   location: {
-    lat: number;
-    lng: number;
+    type: "Point";
+    coordinates: [number, number]; // [lng, lat]
   };
-  description: string;
+  latitude: number;
+  longitude: number;
+  equipment?: string[];
+  description?: string;
   isAvailable: boolean;
 }
 
@@ -18,17 +22,32 @@ const roomSchema = new Schema<IRoom>(
   {
     name: { type: String, required: true, trim: true },
     code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-    floor: { type: String, required: true },
-    capacity: { type: Number, required: true, min: 1 },
-    equipment: [{ type: String, trim: true }],
+    building: { type: String, required: true, trim: true },
+    floor: { type: Number, default: 0 },
+    capacity: { type: Number, default: 0, min: 0 },
+    category: { type: String, default: "lecture_hall", trim: true },
     location: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true },
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+        required: true,
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true,
+      },
     },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    equipment: [{ type: String, trim: true }],
     description: { type: String, default: "" },
     isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
+
+// Optional: 2dsphere index for geospatial querying
+roomSchema.index({ location: "2dsphere" });
 
 export default mongoose.models.Room || mongoose.model<IRoom>("Room", roomSchema);

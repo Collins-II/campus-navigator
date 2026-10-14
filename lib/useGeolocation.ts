@@ -33,6 +33,7 @@ export function useGeolocation(enableTracking = false): GeolocationState & { sto
 
     // Check if geolocation is available
     if (!navigator.geolocation) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState((prev) => ({
         ...prev,
         error: 'Geolocation is not supported by your browser',
@@ -172,10 +173,10 @@ export function calculateBearing(lat1: number, lng1: number, lat2: number, lng2:
 /**
  * Find nearest locations from user's current position
  */
-export function findNearestLocations(
+export function findNearestLocations<T extends { lat: number; lng: number }>(
   userLat: number,
   userLng: number,
-  locations: Array<{ lat: number; lng: number; [key: string]: any }>,
+  locations: T[],
   limit = 5
 ) {
   return locations

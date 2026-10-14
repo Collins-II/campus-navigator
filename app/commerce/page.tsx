@@ -1,8 +1,9 @@
 'use client';
 
-import Link from 'next/link';
-import { ArrowLeft, ExternalLink, ReceiptText, ShoppingBag } from 'lucide-react';
+import { ExternalLink, ReceiptText, ShoppingBag } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import { PageHeader, statusBadgeClass } from '@/components/ui/PageHeader';
 
 type StoreItem = { id: string; name: string; description: string; amount: number; itemType: string };
 type Order = { reference: string; itemName: string; amount: number; currency: string; status: string; createdAt: string };
@@ -28,45 +29,109 @@ export default function CommercePage() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadStore().catch((error) => setMessage(error instanceof Error ? error.message : 'Unable to load campus store.')).finally(() => setLoading(false));
+    void loadStore()
+      .catch((error) => setMessage(error instanceof Error ? error.message : 'Unable to load campus store.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const startCheckout = async (itemId: string) => {
     setCheckoutId(itemId);
     setMessage('');
     try {
-      const response = await fetch('/api/commerce/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId }) });
+      const response = await fetch('/api/commerce/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId }),
+      });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to start payment.');
       window.location.assign(result.paymentUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to start payment.');
-    } finally {
       setCheckoutId('');
     }
   };
 
   return (
-    <main className="portal-shell min-h-screen p-4 text-slate-50 md:p-8">
+    <main className="ui-page">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-300/80">Student services</p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Campus store</h1>
-            <p className="mt-2 max-w-xl text-sm text-slate-400">Pay for official campus services securely through DPO.</p>
-          </div>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 self-start rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 md:self-auto"><ArrowLeft className="h-4 w-4" /> Dashboard</Link>
-        </header>
+        <PageHeader
+          eyebrow="Student services"
+          title="Campus store"
+          subtitle="Pay for official campus services securely through DPO."
+          backHref="/dashboard"
+        />
 
-        {message ? <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{message}</div> : null}
+        {message ? (
+          <div role="alert" className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {message}
+          </div>
+        ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div>
-            <div className="mb-4 flex items-center gap-3"><ShoppingBag className="h-5 w-5 text-emerald-300" /><h2 className="text-lg font-semibold">Available services</h2></div>
-            {loading ? <p className="text-sm text-slate-400">Loading services...</p> : <div className="grid gap-4 md:grid-cols-2">{items.map((item) => <article key={item.id} className="rounded-[22px] border border-slate-800 bg-slate-950/70 p-5"><div className="flex min-h-32 flex-col justify-between"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">{item.itemType.replace('-', ' ')}</p><h3 className="mt-2 text-lg font-semibold text-white">{item.name}</h3><p className="mt-2 text-sm text-slate-400">{item.description}</p></div><div className="mt-5 flex items-center justify-between gap-3"><span className="text-lg font-semibold text-emerald-300">{currency} {item.amount.toFixed(2)}</span><button type="button" onClick={() => void startCheckout(item.id)} disabled={checkoutId !== ''} className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60">{checkoutId === item.id ? 'Starting...' : 'Pay with DPO'}<ExternalLink className="h-3.5 w-3.5" /></button></div></div></article>)}</div>}
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+              <ShoppingBag className="h-5 w-5 text-emerald-600" /> Available services
+            </h2>
+            {loading ? (
+              <div className="grid gap-4 md:grid-cols-2" aria-busy="true">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-40 animate-pulse rounded-lg bg-gray-200/70" />
+                ))}
+              </div>
+            ) : items.length === 0 ? (
+              <div className="ui-card text-center text-sm text-gray-600">No services are available right now.</div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {items.map((item) => (
+                  <article key={item.id} className="ui-card flex flex-col justify-between gap-5">
+                    <div>
+                      <span className="ui-badge ui-badge-neutral">{item.itemType.replace('-', ' ')}</span>
+                      <h3 className="mt-3 text-lg font-bold">{item.name}</h3>
+                      <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xl font-extrabold text-emerald-700">
+                        {currency} {item.amount.toFixed(2)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void startCheckout(item.id)}
+                        disabled={checkoutId !== ''}
+                        className="ui-btn ui-btn-primary ui-btn-sm"
+                      >
+                        {checkoutId === item.id ? 'Starting...' : 'Pay with DPO'}
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
 
-          <aside className="rounded-[22px] border border-slate-800 bg-slate-950/70 p-5"><div className="mb-5 flex items-center gap-3"><ReceiptText className="h-5 w-5 text-indigo-300" /><h2 className="text-lg font-semibold">Recent transactions</h2></div>{orders.length === 0 ? <p className="text-sm text-slate-400">Your completed and pending payments will appear here.</p> : <div className="space-y-3">{orders.map((order) => <div key={order.reference} className="border-b border-slate-800 pb-3 last:border-0"><div className="flex items-start justify-between gap-3"><p className="text-sm font-medium text-white">{order.itemName}</p><span className={`text-[10px] font-semibold uppercase tracking-wide ${order.status === 'paid' ? 'text-emerald-300' : order.status === 'failed' ? 'text-rose-300' : 'text-amber-300'}`}>{order.status}</span></div><p className="mt-1 text-xs text-slate-500">{order.reference} · {order.currency} {order.amount.toFixed(2)}</p></div>)}</div>}</aside>
+          <aside className="ui-card h-fit">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
+              <ReceiptText className="h-5 w-5 text-emerald-600" /> Recent transactions
+            </h2>
+            {orders.length === 0 ? (
+              <p className="text-sm text-gray-600">Your completed and pending payments will appear here.</p>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {orders.map((order) => (
+                  <li key={order.reference} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold">{order.itemName}</p>
+                      <span className={statusBadgeClass(order.status)}>{order.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {order.reference} · {order.currency} {order.amount.toFixed(2)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
         </section>
       </div>
     </main>

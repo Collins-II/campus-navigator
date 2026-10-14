@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const program = String(body?.program || "").trim();
     const year = String(body?.year || "").trim();
     const phone = String(body?.phone || "").trim();
-    const role = String(body?.role || "student").trim();
+    const role = "student";
 
     if (!name || !studentId || !email || !password) {
       return NextResponse.json({ error: "Name, student ID, email, and password are required." }, { status: 400 });
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         name,
         email,
         password: hashedPassword,
-        role: role === "staff" || role === "admin" ? role : "student",
+        role,
         department,
         program,
         year,

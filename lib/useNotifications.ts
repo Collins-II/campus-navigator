@@ -192,6 +192,7 @@ export const useNotifications = (): UseNotificationsReturn => {
 
   // Fetch initial data
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications();
     fetchUnreadCount();
 

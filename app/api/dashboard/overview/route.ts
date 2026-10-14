@@ -43,7 +43,7 @@ export async function GET() {
       return {
         id: String(booking._id ?? "booking-id"),
         purpose: booking.purpose || "Campus booking",
-        room: typeof booking.room === "object" && booking.room ? booking.room.name : "Main Library",
+        room: typeof booking.room === "object" && booking.room ? booking.room.name : "Unknown room",
         roomCode: typeof booking.room === "object" && booking.room ? booking.room.code : "L1",
         floor: typeof booking.room === "object" && booking.room ? booking.room.floor : "Ground Floor",
         status: booking.status || "pending",

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     await connectToDatabase();
 
-    let query: Record<string, unknown> = {
+    const query: Record<string, unknown> = {
       user: session.user.id,
       isDeleted: false,
     };
@@ -43,7 +43,8 @@ export async function GET(request: Request) {
     const total = await Notification.countDocuments(query);
 
     const formattedNotifications: NotificationResponse[] = notifications.map(
-      (notif: any) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (notif: Record<string, any>) => ({
         id: notif._id.toString(),
         user: notif.user.toString(),
         type: notif.type,

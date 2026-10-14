@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { ArrowLeft, BriefcaseBusiness, CreditCard, LayoutDashboard, LogOut, MapPinned, Pencil, Plus, Settings, ShoppingBag, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CreditCard, LayoutDashboard, LogOut, Menu, MessageSquare, Pencil, Plus, Settings, ShoppingBag, UserCircle2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { useChatUnread } from '@/lib/ChatUnreadContext';
 
 import { AvailableRoomsPanel } from '@/components/dashboard/AvailableRoomsPanel';
 import { BookingModal } from '@/components/dashboard/BookingModal';
-import { LectureRoomModal } from '@/components/dashboard/LectureRoomModal';
 import { PaymentModal } from '@/components/dashboard/PaymentModal';
 import { ProfileModal } from '@/components/dashboard/ProfileModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
@@ -71,8 +71,9 @@ export default function DashboardPage() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const [lectureRoomModalOpen, setLectureRoomModalOpen] = useState(false);
-  const [preferredRoom, setPreferredRoom] = useState('Main Library');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { unread: unreadMessages } = useChatUnread();
+  const [preferredRoom, setPreferredRoom] = useState('');
   const [payment, setPayment] = useState<{
     paymentMethod: 'card' | 'mobile-money' | 'bank-transfer';
     provider: string;
@@ -168,9 +169,9 @@ export default function DashboardPage() {
 
   const stats = useMemo(
     () => [
-      { label: 'Active bookings', value: String(summary.activeBookings), tone: 'bg-indigo-500/10 text-indigo-200 ring-1 ring-indigo-500/20' },
-      { label: 'Room usage', value: `${summary.roomUsage}%`, tone: 'bg-emerald-500/10 text-emerald-200 ring-1 ring-emerald-500/20' },
-      { label: 'Upcoming classes', value: String(summary.upcomingClasses), tone: 'bg-violet-500/10 text-violet-200 ring-1 ring-violet-500/20' },
+      { label: 'Active bookings', value: String(summary.activeBookings), tone: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20' },
+      { label: 'Room usage', value: `${summary.roomUsage}%`, tone: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20' },
+      { label: 'Upcoming classes', value: String(summary.upcomingClasses), tone: 'bg-violet-50 text-violet-700 ring-1 ring-violet-500/20' },
     ],
     [summary]
   );
@@ -183,14 +184,14 @@ export default function DashboardPage() {
 
   const openBookingModal = (roomName?: string) => {
     setSelectedBooking(null);
-    const nextPreferredRoom = roomName ?? rooms.find((room) => room.isAvailable !== false)?.name ?? 'Main Library';
+    const nextPreferredRoom = roomName ?? rooms.find((room) => room.isAvailable !== false)?.name ?? '';
     setPreferredRoom(nextPreferredRoom);
     setBookingModalOpen(true);
   };
 
   if (status === 'loading' || loading) {
     return (
-      <main className="portal-shell flex min-h-screen items-center justify-center p-4 text-gray-900">
+      <main className="ui-page flex min-h-screen items-center justify-center p-4 text-gray-900">
         <div className="rounded-2xl border border-gray-300 bg-white px-6 py-4 text-sm text-gray-600">
           Loading dashboard...
         </div>
@@ -199,44 +200,39 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="portal-shell min-h-screen p-4 text-gray-900 md:p-8">
+    <main className="ui-page min-h-screen text-gray-900 !p-0 md:!p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-600/80">Campus navigator</p>
-            <h1 className="mt-2 text-3xl font-semibold text-gray-900">Dashboard</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={scrollToOverview}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-700 transition hover:border-gray-400 hover:bg-gray-200"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => setLectureRoomModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-700 transition hover:border-gray-400 hover:bg-gray-200"
-            >
-              <MapPinned className="h-4 w-4" />
-              New lecture room
-            </button>
+        <div className="mb-6 bg-black px-4 pb-6 pt-[calc(1.25rem+env(safe-area-inset-top))] text-white md:rounded-md md:px-8">
+          <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[#4ade80]">Campus navigator · Student</p>
+          <h1 className="mt-2 text-5xl font-black uppercase leading-[0.9] tracking-tight">
+            Hi, {String(userName).split(' ')[0]}
+          </h1>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setBookingModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+              className="ui-btn ui-btn-primary"
             >
               <Plus className="h-4 w-4" />
               New booking
             </button>
-            <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-700 transition hover:border-gray-400 hover:bg-gray-200">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-expanded={menuOpen}
+              aria-controls="dashboard-sidebar"
+              className="ui-btn dash-menu-btn border-2 border-white/40 text-white"
+            >
+              <Menu className="h-4 w-4" />
+              Menu
+            </button>
+            <Link href="/" className="ui-btn border-2 border-white/40 text-white">
               <ArrowLeft className="h-4 w-4" />
-              Back home
+              Home
             </Link>
           </div>
         </div>
+        <div className="px-4 md:px-0">
 
         {error ? (
           <div className="mb-6 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -245,7 +241,21 @@ export default function DashboardPage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-          <aside className="rounded-[28px] border border-gray-200 bg-white p-4 shadow-xl shadow-gray-200/20">
+          {menuOpen && (
+            <div className="fixed inset-0 z-[1290] bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+          )}
+          <aside
+            id="dashboard-sidebar"
+            className={`fixed inset-y-0 left-0 z-[1300] w-[85%] max-w-xs overflow-y-auto bg-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-200 lg:static lg:z-auto lg:w-auto lg:max-w-none lg:translate-x-0 lg:overflow-visible lg:rounded-md lg:border lg:border-gray-200 lg:p-4 lg:shadow-xl lg:shadow-gray-200/20 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          >
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close menu"
+              className="mb-2 ml-auto flex h-11 w-11 items-center justify-center lg:hidden"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <div className="mb-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300">
                 <BriefcaseBusiness className="h-5 w-5" />
@@ -256,7 +266,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="dash-nav" onClick={() => setMenuOpen(false)}>
               <button
                 type="button"
                 onClick={scrollToOverview}
@@ -285,6 +295,17 @@ export default function DashboardPage() {
               </button>
 
               <Link
+                href="/chat"
+                className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Messages
+                {unreadMessages > 0 && (
+                  <span className="ml-auto rounded-full bg-[#008236] px-2 py-0.5 text-[10px] font-black text-white">{unreadMessages}</span>
+                )}
+              </Link>
+
+              <Link
                 href="/commerce"
                 className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-100"
               >
@@ -303,15 +324,6 @@ export default function DashboardPage() {
 
               <button
                 type="button"
-                onClick={() => setLectureRoomModalOpen(true)}
-                className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition hover:border-gray-400 hover:bg-gray-100"
-              >
-                <MapPinned className="h-4 w-4" />
-                Lecture rooms
-              </button>
-
-              <button
-                type="button"
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-sm text-rose-700 transition hover:border-rose-400 hover:bg-rose-100"
               >
@@ -324,15 +336,15 @@ export default function DashboardPage() {
           <section className="space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
               {stats.map((stat) => (
-                <div key={stat.label} className={`rounded-[22px] border border-gray-200 bg-white p-4 ${stat.tone}`}>
-                  <div className="text-2xl font-semibold">{stat.value}</div>
-                  <div className="mt-1 text-sm opacity-80">{stat.label}</div>
+                <div key={stat.label} className="border-2 border-black bg-white p-4">
+                  <div className="text-5xl font-black tabular-nums leading-none text-[#008236]">{stat.value}</div>
+                  <div className="mt-2 text-[11px] font-black uppercase tracking-widest text-black">{stat.label}</div>
                 </div>
               ))}
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-              <div className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/20">
+              <div className="rounded-md border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/20">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-600/80">Schedule</p>
@@ -382,10 +394,10 @@ export default function DashboardPage() {
               <AvailableRoomsPanel rooms={rooms} />
             </div>
 
-            <div className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/20">
+            <div className="rounded-md border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/20">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-violet-600/80">Bookings</p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-violet-700">Bookings</p>
                   <h3 className="mt-1 text-xl font-semibold text-gray-900">Recent activity</h3>
                 </div>
                 <span className="rounded-full bg-gray-200 px-2.5 py-1 text-[10px] font-medium text-gray-600">{summary.totalBookings} total</span>
@@ -402,9 +414,9 @@ export default function DashboardPage() {
 
                       <div className="flex items-center gap-2">
                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ${
-                          booking.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-200 ring-1 ring-emerald-500/20' :
-                          booking.status === 'cancelled' ? 'bg-rose-500/10 text-rose-200 ring-1 ring-rose-500/20' :
-                          'bg-amber-500/10 text-amber-200 ring-1 ring-amber-500/20'
+                          booking.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20' :
+                          booking.status === 'cancelled' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-500/20' :
+                          'bg-amber-50 text-amber-800 ring-1 ring-amber-500/20'
                         }`}>
                           {booking.status}
                         </span>
@@ -432,6 +444,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </section>
+        </div>
         </div>
       </div>
 
@@ -467,12 +480,6 @@ export default function DashboardPage() {
         open={settingsModalOpen}
         settings={settings}
         onClose={() => setSettingsModalOpen(false)}
-        onSaved={fetchDashboardData}
-      />
-
-      <LectureRoomModal
-        open={lectureRoomModalOpen}
-        onClose={() => setLectureRoomModalOpen(false)}
         onSaved={fetchDashboardData}
       />
     </main>

@@ -24,10 +24,10 @@ export function RoomStatusBadge({ status, compact = false, className = '' }: Roo
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
         status === 'available'
-          ? 'bg-emerald-500/10 text-emerald-200 ring-1 ring-emerald-500/20'
+          ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20'
           : status === 'busy'
-            ? 'bg-amber-500/10 text-amber-200 ring-1 ring-amber-500/20'
-            : 'bg-slate-800 text-slate-200 ring-1 ring-slate-700'
+            ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-500/20'
+            : 'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
       } ${className}`}
     >
       {compact ? label : `${label} · ${chip}`}
@@ -112,10 +112,10 @@ export function RoomAvailabilityStatus({
   return (
     <div className={`rounded-2xl border px-3 py-2 text-sm ${
       effectiveStatus === 'available'
-        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+        ? 'border-emerald-500/30 bg-emerald-50 text-emerald-700'
         : effectiveStatus === 'busy'
-          ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
-          : 'border-slate-700 bg-slate-900/60 text-slate-300'
+          ? 'border-amber-500/30 bg-amber-50 text-amber-800'
+          : 'border-gray-300 bg-gray-50 text-gray-600'
     }`}>
       {compact ? (
         <div className="flex items-center justify-between gap-3">

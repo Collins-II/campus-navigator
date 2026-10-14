@@ -88,7 +88,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           onClick={() => setFilter("all")}
           className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
             filter === "all"
-              ? "bg-blue-100 text-blue-800"
+              ? "bg-emerald-100 text-emerald-800"
               : "text-gray-600 hover:bg-gray-100"
           }`}
         >
@@ -98,7 +98,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           onClick={() => setFilter("unread")}
           className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
             filter === "unread"
-              ? "bg-blue-100 text-blue-800"
+              ? "bg-emerald-100 text-emerald-800"
               : "text-gray-600 hover:bg-gray-100"
           }`}
         >
@@ -108,7 +108,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
           onClick={() => setFilter("read")}
           className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
             filter === "read"
-              ? "bg-blue-100 text-blue-800"
+              ? "bg-emerald-100 text-emerald-800"
               : "text-gray-600 hover:bg-gray-100"
           }`}
         >
@@ -118,11 +118,11 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
 
       {/* Action Bar */}
       {unreadCount > 0 && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-200 flex items-center justify-between">
-          <p className="text-sm text-blue-800">{unreadCount} unread notifications</p>
+        <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center justify-between">
+          <p className="text-sm text-emerald-800">{unreadCount} unread notifications</p>
           <button
             onClick={markAllAsRead}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
           >
             Mark all as read
           </button>
@@ -163,7 +163,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
       <div className="px-4 py-3 border-t border-gray-200 text-center">
         <a
           href="/dashboard"
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
         >
           View all notifications
         </a>
@@ -191,7 +191,7 @@ function NotificationItem({
   return (
     <div
       className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-        !notification.isRead ? "bg-blue-50" : ""
+        !notification.isRead ? "bg-emerald-50" : ""
       }`}
     >
       <div className="flex gap-3">
@@ -226,7 +226,7 @@ function NotificationItem({
               {notification.actionUrl && (
                 <a
                   href={notification.actionUrl}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs text-emerald-700 hover:text-emerald-800 font-medium"
                 >
                   {notification.actionLabel || "View"}
                 </a>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
-import { ArrowLeft, GraduationCap, Mail, ShieldCheck, User } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Mail, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
 
   const passwordStrength = useMemo(() => {
-    if (!password) return { label: 'Empty', value: 0, color: 'bg-slate-500' };
+    if (!password) return { label: 'Empty', value: 0, color: 'bg-gray-400' };
     let score = 0;
     if (password.length >= 6) score += 35;
     if (password.length >= 10) score += 20;
@@ -50,7 +50,7 @@ export default function LoginPage() {
 
     if (score < 40) return { label: 'Weak', value: 25, color: 'bg-rose-400' };
     if (score < 70) return { label: 'Medium', value: 60, color: 'bg-amber-400' };
-    return { label: 'Strong', value: 100, color: 'bg-emerald-400' };
+    return { label: 'Strong', value: 100, color: 'bg-emerald-600' };
   }, [password]);
 
   const handleDepartmentChange = (nextDepartment: string) => {
@@ -141,7 +141,7 @@ export default function LoginPage() {
 
   if (status === 'loading') {
     return (
-      <main className="portal-shell flex min-h-screen items-center justify-center p-4 text-gray-900">
+      <main className="ui-page flex min-h-screen items-center justify-center p-4 text-gray-900">
         <div className="rounded-2xl border border-gray-300 bg-white px-6 py-4 text-sm text-gray-700">
           Preparing secure campus access...
         </div>
@@ -150,31 +150,30 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="portal-shell flex min-h-screen items-center justify-center p-4 pb-28 text-gray-900 sm:p-6">
-      <div className="w-full max-w-lg rounded-[30px] border border-gray-300 bg-white p-6 shadow-md backdrop-blur-md">
-        <Link href="/" className="mb-5 inline-flex items-center gap-2 text-sm text-gray-700 transition hover:text-gray-900">
+    <main className="min-h-dvh bg-black text-white sm:flex sm:items-center sm:justify-center sm:p-6">
+      <div className="w-full max-w-lg bg-white p-6 pb-10 text-gray-900 sm:rounded-md">
+        <Link href="/" className="mb-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-700 transition hover:text-black">
           <ArrowLeft className="h-4 w-4" />
           Back home
         </Link>
 
-        <div className="mb-6 flex items-center gap-3">
-            {/* Logo Container */}
-          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gradient-to-br from-emerald-50 to-white p-1 shadow-sm ring-1 ring-emerald-100">
+        <div className="mb-6 flex items-center gap-3 border-b-[3px] border-[#008236] pb-5">
+          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center bg-black p-1">
             <Image
              src="/images/unza_logo.jpg"
              width={50}
              height={50}
              alt="UNZA Logo"
-             className="rounded-lg object-cover"
+             className="rounded-sm object-cover"
             />
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-600">Campus navigator</p>
-            <h1 className="mt-1 text-2xl font-semibold text-gray-900">{mode === 'login' ? 'Sign in' : 'Create account'}</h1>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#008236]">Campus navigator</p>
+            <h1 className="mt-1 text-4xl font-black uppercase leading-none tracking-tight text-black">{mode === 'login' ? 'Sign in' : 'Join'}</h1>
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-2 rounded-2xl border border-gray-300 bg-gray-50 p-1">
+        <div className="mb-5 grid grid-cols-2 border-2 border-black">
           {(['login', 'register'] as AuthMode[]).map((option) => (
             <button
               key={option}
@@ -184,10 +183,10 @@ export default function LoginPage() {
                 setError('');
                 setSuccess('');
               }}
-              className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+              className={`px-3 py-3 text-xs font-black uppercase tracking-widest transition ${
                 mode === option
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-gray-700 hover:bg-gray-200'
+                  ? 'bg-black text-white'
+                  : 'text-black hover:bg-gray-100'
               }`}
             >
               {option === 'login' ? 'Login' : 'Register'}
@@ -285,13 +284,13 @@ export default function LoginPage() {
             />
           )}
 
-          {error && <p className="text-sm text-rose-300">{error}</p>}
-          {success && <p className="text-sm text-emerald-300">{success}</p>}
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+          {success && <p className="text-sm text-emerald-700">{success}</p>}
 
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded bg-[#008236] px-4 py-4 text-sm font-black uppercase tracking-widest text-white transition hover:bg-[#016630] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {pending ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : mode === 'login' ? 'Continue to dashboard' : 'Create account'}
           </button>

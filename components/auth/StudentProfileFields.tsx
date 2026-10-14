@@ -51,7 +51,7 @@ export function TextField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+      <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-gray-600">
         {icon}
         {label}
       </span>
@@ -60,7 +60,7 @@ export function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500 ${className}`}
+        className={`w-full rounded border-2 border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-black ${className}`}
       />
     </label>
   );
@@ -83,7 +83,7 @@ export function PasswordField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+      <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-gray-600">
         <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-current">🔒</span>
         {label}
       </span>
@@ -93,12 +93,12 @@ export function PasswordField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-2.5 pr-11 text-sm text-white outline-none focus:border-indigo-500"
+          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 pr-11 text-sm text-gray-900 outline-none focus:border-black"
         />
         <button
           type="button"
           onClick={onToggleVisibility}
-          className="absolute inset-y-0 right-3 flex items-center text-slate-400 transition hover:text-white"
+          className="absolute inset-y-0 right-3 flex items-center text-gray-600 transition hover:text-gray-900"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? '🙈' : '👁️'}
@@ -118,18 +118,18 @@ export function SelectField({
 }: SelectFieldProps) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+      <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-gray-600">
         {icon}
         {label}
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={`w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500 ${className}`}
+        className={`w-full rounded border-2 border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-black ${className}`}
       >
-        <option value="" className="bg-slate-900 text-slate-300">Select {label.toLowerCase()}</option>
+        <option value="" className="bg-gray-50 text-gray-600">Select {label.toLowerCase()}</option>
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-slate-900 text-white">
+          <option key={option.value} value={option.value} className="bg-gray-50 text-gray-900">
             {option.label}
           </option>
         ))}
@@ -191,7 +191,7 @@ export function PhoneInput({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+      <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-gray-600">
         <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-current">☎</span>
         Phone
       </span>
@@ -199,10 +199,10 @@ export function PhoneInput({
         <select
           value={countryCode}
           onChange={(event) => onCountryCodeChange(event.target.value)}
-          className="w-28 rounded-2xl border border-slate-800 bg-slate-900/60 px-2 py-2.5 text-sm text-white outline-none focus:border-indigo-500"
+          className="w-28 rounded-2xl border border-gray-200 bg-gray-50 px-2 py-2.5 text-sm text-gray-900 outline-none focus:border-black"
         >
           {countryCodes.map((code) => (
-            <option key={code.value} value={code.value} className="bg-slate-900 text-white">
+            <option key={code.value} value={code.value} className="bg-gray-50 text-gray-900">
               {code.label}
             </option>
           ))}
@@ -211,7 +211,7 @@ export function PhoneInput({
           type="tel"
           value={phoneNumber}
           onChange={(event) => onPhoneNumberChange(event.target.value.replace(/\D/g, '').slice(0, 12))}
-          className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-2.5 text-sm text-white outline-none focus:border-indigo-500"
+          className="w-full rounded border-2 border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-black"
           placeholder="Enter phone number"
         />
       </div>

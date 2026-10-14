@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
 import Notification from "@/lib/database/models/Notification";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
