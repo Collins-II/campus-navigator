@@ -529,7 +529,7 @@ function MetricCard({
         {icon}
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 truncate text-[8px] sm:text-[10px] font-black leading-none tabular-nums text-[#008236]">{value}</div>
+      <div className="mt-1 truncate text-[10px] sm:text-[16px] font-black leading-none tabular-nums text-[#008236]">{value}</div>
     </div>
   );
 }
