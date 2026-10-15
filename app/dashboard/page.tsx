@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { ArrowLeft, BriefcaseBusiness, CreditCard, LayoutDashboard, LogOut, Menu, MessageSquare, Pencil, Plus, Settings, ShoppingBag, UserCircle2, X } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CalendarRange, CreditCard, LayoutDashboard, LogOut, Menu, MessageSquare, Pencil, Plus, Settings, ShoppingBag, UserCircle2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useChatUnread } from '@/lib/ChatUnreadContext';
@@ -303,6 +303,14 @@ export default function DashboardPage() {
                 {unreadMessages > 0 && (
                   <span className="ml-auto rounded-full bg-[#008236] px-2 py-0.5 text-[10px] font-black text-white">{unreadMessages}</span>
                 )}
+              </Link>
+
+              <Link
+                href="/timetable"
+                className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition hover:border-gray-400 hover:bg-gray-100"
+              >
+                <CalendarRange className="h-4 w-4" />
+                Timetable &amp; announcements
               </Link>
 
               <Link

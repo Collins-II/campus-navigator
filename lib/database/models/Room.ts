@@ -7,6 +7,7 @@ export interface IRoom extends Document {
   floor?: number;
   capacity?: number;
   category: string;
+  spaceType?: "lecture_room" | "laboratory" | "seminar_room" | "office" | "library" | "clinic" | "cafeteria" | "residence" | "administrative" | "other";
   location: {
     type: "Point";
     coordinates: [number, number]; // [lng, lat]
@@ -26,6 +27,12 @@ const roomSchema = new Schema<IRoom>(
     floor: { type: Number, default: 0 },
     capacity: { type: Number, default: 0, min: 0 },
     category: { type: String, default: "lecture_hall", trim: true },
+    spaceType: {
+      type: String,
+      enum: ["lecture_room", "laboratory", "seminar_room", "office", "library", "clinic", "cafeteria", "residence", "administrative", "other"],
+      default: "lecture_room",
+      index: true,
+    },
     location: {
       type: {
         type: String,
