@@ -12,6 +12,7 @@ import { BookingModal } from '@/components/dashboard/BookingModal';
 import { PaymentModal } from '@/components/dashboard/PaymentModal';
 import { ProfileModal } from '@/components/dashboard/ProfileModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
+import Loading from '../loading';
 
 type DashboardSummary = {
   totalBookings: number;
@@ -192,9 +193,7 @@ export default function DashboardPage() {
   if (status === 'loading' || loading) {
     return (
       <main className="ui-page flex min-h-screen items-center justify-center p-4 text-gray-900">
-        <div className="rounded-2xl border border-gray-300 bg-white px-6 py-4 text-sm text-gray-600">
-          Loading dashboard...
-        </div>
+        <Loading />
       </main>
     );
   }

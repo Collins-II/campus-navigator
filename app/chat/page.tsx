@@ -323,7 +323,7 @@ function Thread({ conversation, userId, onBack, onActivity }: {
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={submit} className="flex items-end gap-2 border-t border-gray-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <form onSubmit={submit} className="flex items-end gap-2 border-t border-gray-200 bg-white mb-20 md:mb-0 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <textarea
           rows={1}
           value={text}

@@ -18,7 +18,7 @@ export type GeolocationState = {
  * Hook for tracking user's live location on campus
  * Requests geolocation permission and continuously updates position
  */
-export function useGeolocation(enableTracking = false): GeolocationState & { stopTracking: () => void } {
+export function useGeolocation(enableTracking = false, retryKey = 0): GeolocationState & { stopTracking: () => void } {
   const [state, setState] = useState<GeolocationState>({
     location: null,
     error: null,
@@ -41,7 +41,7 @@ export function useGeolocation(enableTracking = false): GeolocationState & { sto
       return;
     }
 
-    setState((prev) => ({ ...prev, loading: true }));
+    setState((prev) => ({ ...prev, error: null, loading: true }));
 
     // Get initial position
     const getPosition = () => {
@@ -119,7 +119,7 @@ export function useGeolocation(enableTracking = false): GeolocationState & { sto
         navigator.geolocation.clearWatch(id);
       }
     };
-  }, [enableTracking]);
+  }, [enableTracking, retryKey]);
 
   const stopTracking = () => {
     if (watchId !== null) {

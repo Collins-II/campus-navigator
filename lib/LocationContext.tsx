@@ -21,7 +21,8 @@ const STORAGE_KEY = "campus:location-tracking";
  */
 export function LocationProvider({ children }: { children: ReactNode }) {
   const [tracking, setTracking] = useState(false);
-  const geo = useGeolocation(tracking);
+  const [retryKey, setRetryKey] = useState(0);
+  const geo = useGeolocation(tracking, retryKey);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +50,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const startTracking = useCallback(() => {
     window.localStorage.setItem(STORAGE_KEY, "on");
     setTracking(true);
+    setRetryKey((key) => key + 1);
   }, []);
 
   const stopTracking = useCallback(() => {
