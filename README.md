@@ -16,6 +16,16 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Student timetable
+
+The `/timetable` page presents published sessions in a day-grouped table, sorted by start time. Filter by department, academic year, semester and cohort to find the relevant classes; the university schedule is not automatically limited to enrolled courses. On smaller screens, scroll the table horizontally while the time column stays visible.
+
+**Download PDF** saves a landscape A4 timetable directly, without opening a print dialog. The PDF contains only sessions matching the current filters, including room details, lecturers and session notes, with repeated column headings and page numbers for longer schedules. PDF generation runs in the browser and loads only when requested. CSV and recurring calendar (`.ics`) exports remain available and use the same filtered sessions.
+
+Timetables require an authenticated student session and a configured campus-data integration. Announcements remain visible beside the schedule on wide screens and below it on smaller screens. Check the live page for schedule changes after downloading.
+
+Run `npm run test:timetable` with Node.js 22.18+ (or Node.js 24+) to check PDF contents, pagination, missing details and empty-export handling.
+
 ## Campus commerce and DPO
 
 Authenticated students can use `/commerce` to purchase campus services. Checkout creates a pending order, requests a hosted DPO payment token, and redirects the student to DPO. Configure these server-side variables before enabling live checkout:

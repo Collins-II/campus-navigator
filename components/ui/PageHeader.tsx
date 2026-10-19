@@ -1,4 +1,4 @@
-import Image from 'next/image';
+//import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -25,7 +25,7 @@ export function PageHeader({ eyebrow = 'Campus Navigator', title, subtitle, back
         </Link>
         <div>
           <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#4ade80]">
-            <Image src="/images/unza_logo.jpg" alt="" width={16} height={16} className="rounded-full" />
+            {/*<Image src="/images/unza_logo.jpg" alt="" width={36} height={36} className="rounded-full" />*/}
             {eyebrow}
           </p>
           <h1 className="mt-1 text-3xl font-black uppercase leading-none tracking-tight text-white">{title}</h1>
