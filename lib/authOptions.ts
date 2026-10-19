@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 
 import User from "@/lib/database/models/User";
 import { connectToDatabase } from "@/lib/database";
+import { logApiError } from "@/lib/database/errors";
 
 const nextAuthSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
 
@@ -63,8 +64,8 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           };
         } catch (error) {
-          console.error("Database auth failed:", error);
-          return null;
+          logApiError(error, "auth.credentials");
+          throw new Error("Authentication is temporarily unavailable.");
         }
       },
     }),

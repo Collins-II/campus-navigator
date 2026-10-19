@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
-import { ArrowLeft, GraduationCap, Mail, User } from 'lucide-react';
+import { GraduationCap, Mail, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -15,7 +14,7 @@ import {
   TextField,
   departmentPrograms,
 } from '@/components/auth/StudentProfileFields';
-import Image from 'next/image';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type AuthMode = 'login' | 'register';
 
@@ -127,7 +126,11 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        throw new Error('Invalid student ID or password. Please try again.');
+        throw new Error(
+          result.error === 'CredentialsSignin'
+            ? 'Invalid student ID or password. Please try again.'
+            : 'Sign-in is temporarily unavailable. Please try again shortly.'
+        );
       }
 
       router.push('/dashboard');
@@ -150,28 +153,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-black text-white sm:flex sm:items-center sm:justify-center sm:p-6">
-      <div className="w-full max-w-lg bg-white p-6 pb-10 text-gray-900 sm:rounded-md">
-        <Link href="/" className="mb-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-700 transition hover:text-black">
-          <ArrowLeft className="h-4 w-4" />
-          Back home
-        </Link>
-
-        <div className="mb-6 flex items-center gap-3 border-b-[3px] border-[#008236] pb-5">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center bg-black p-1">
-            <Image
-             src="/images/unza_logo.jpg"
-             width={50}
-             height={50}
-             alt="UNZA Logo"
-             className="rounded-sm object-cover"
-            />
-          </div>
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#008236]">Campus navigator</p>
-            <h1 className="mt-1 text-4xl font-black uppercase leading-none tracking-tight text-black">{mode === 'login' ? 'Sign in' : 'Join'}</h1>
-          </div>
-        </div>
+    <main className="min-h-dvh bg-slate-50 px-4 py-4 text-slate-900 md:px-8 md:py-8">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader title={mode === 'login' ? 'Sign in' : 'Join'} />
+      </div>
+      <div className="mx-auto w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 pb-10 text-gray-900 shadow-sm">
 
         <div className="mb-5 grid grid-cols-2 border-2 border-black">
           {(['login', 'register'] as AuthMode[]).map((option) => (

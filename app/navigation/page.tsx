@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  ArrowLeft,
   CalendarDays,
   Compass,
   MapPin,
@@ -20,6 +19,7 @@ import { calculateDistance } from '@/lib/useGeolocation';
 import { useUserLocation } from '@/lib/LocationContext';
 import type { CampusRouteInfo } from '@/components/Map';
 import { haversine, pathProgress, stepOffsets, formatMeters } from '@/lib/routing';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -242,43 +242,31 @@ function NavigationContent() {
   );
 
   return (
-    <main className="min-h-screen bg-white pb-28 text-gray-900 md:p-8">
+    <main className="min-h-screen bg-slate-50 pb-28 text-slate-900 md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-4 flex items-center justify-between gap-4 border-b-[3px] border-[#008236] bg-black px-4 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] text-white md:rounded-md">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[#4ade80]">
-              Campus navigator
-            </p>
-            <h1 className="mt-1 text-3xl font-black uppercase leading-none tracking-tight">Live navigation</h1>
-          </div>
-          <Link
-            href="/"
-            aria-label="Back home"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white transition hover:bg-white hover:text-black active:scale-95"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+        <div className="px-4 pt-4 md:px-0 md:pt-0">
+          <PageHeader title="Live navigation" />
         </div>
 
-        <div className="grid gap-4 px-3 sm:gap-6 md:px-0 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-md border-2 border-black bg-white p-4 sm:p-5">
+        <div className="grid gap-5 px-3 sm:gap-6 md:px-0 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.85fr)]">
+          <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
             <div className="mb-4 sm:mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-cyan-600/80">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
                   Guided route
                 </p>
-                <h2 className="mt-1.5 sm:mt-1 text-lg sm:text-2xl font-semibold text-gray-900 break-words">
+                <h2 className="mt-1 break-words text-xl font-semibold text-slate-900 sm:text-2xl">
                   {destination || (stopsState === 'loading' ? 'Loading…' : 'Choose a destination')}
                 </h2>
               </div>
 
-              <div className="flex items-center border-2 border-black">
+              <div className="inline-flex w-fit items-center rounded-xl bg-slate-100 p-1">
                 {(['walking', 'cycling'] as const).map((option) => (
                   <button
                     key={option}
                     onClick={() => setMode(option)}
-                    className={`px-3 py-2 text-[11px] font-black uppercase tracking-widest transition ${
-                      mode === option ? 'bg-black text-white' : 'text-black hover:bg-gray-100'
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold capitalize transition ${
+                      mode === option ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     {option}
@@ -287,7 +275,7 @@ function NavigationContent() {
               </div>
             </div>
 
-            <div className="mb-6 flex flex-wrap gap-2 sm:gap-3">
+            <div className="mb-5 grid grid-cols-3 gap-2 sm:gap-3">
               <MetricCard
                 icon={<Route className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />}
                 label="Time left"
@@ -305,7 +293,7 @@ function NavigationContent() {
               />
             </div>
 
-            <div className="mb-6 overflow-hidden rounded-lg sm:rounded-2xl lg:rounded-[26px] border border-gray-200 bg-white p-0 md:p-2">
+            <div className="mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 sm:rounded-2xl sm:p-2">
               <Map
                 destination={selected ? { id: selected.id, name: selected.name, lat: selected.lat, lng: selected.lng, tag: selected.type } : undefined}
                 markers={mapMarkers}
@@ -317,13 +305,13 @@ function NavigationContent() {
             </div>
 
             {/* Location tracking control */}
-            <div className="mb-6 rounded-lg sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4">
+            <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:rounded-2xl sm:p-4">
               <button
                 onClick={enableTracking ? stopTracking : startTracking}
-                className={`w-full flex min-h-[52px] items-center justify-center gap-2 rounded px-4 text-xs font-black uppercase tracking-widest transition active:scale-95 ${
+                className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition active:scale-95 ${
                   enableTracking
-                    ? 'bg-black text-white'
-                    : 'bg-[#008236] text-white hover:bg-[#016630]'
+                    ? 'bg-slate-900 text-white hover:bg-slate-800'
+                    : 'bg-emerald-700 text-white hover:bg-emerald-800'
                 }`}
               >
                 <Locate className="h-4 w-4 flex-shrink-0" />
@@ -336,40 +324,40 @@ function NavigationContent() {
               )}
             </div>
 
-            <div className="mb-5 rounded-lg sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4">
-              <div className="mb-2 flex items-center justify-between text-[10px] sm:text-xs uppercase tracking-[0.2em] text-gray-600">
+            <div className="mb-5 rounded-xl border border-slate-200 bg-white p-3 sm:rounded-2xl sm:p-4">
+              <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-600">
                 <span>Route progress</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
-              <div className="h-2 sm:h-2.5 w-full overflow-hidden rounded-full bg-gray-300">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 sm:h-2.5">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500 transition-all duration-300"
+                  className="h-full rounded-full bg-emerald-600 transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
             </div>
 
-            <div className="rounded-lg sm:rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 sm:rounded-2xl sm:p-5">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 sm:h-10 w-9 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300 flex-shrink-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                   <TimerReset className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-600">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
                     Live route
                   </p>
-                  <h3 className="mt-1 text-base sm:text-lg font-semibold text-gray-900">Recommended path</h3>
+                  <h3 className="mt-1 text-base font-semibold text-slate-900 sm:text-lg">Recommended path</h3>
                 </div>
               </div>
 
               <div className="space-y-2 sm:space-y-3">
                 {arrived && (
-                  <p className="rounded bg-[#008236] p-3 text-sm font-black uppercase tracking-wide text-white">
+                  <p className="rounded-xl bg-emerald-700 p-3 text-sm font-semibold text-white">
                     You have arrived at {destination}
                   </p>
                 )}
                 {approximate && (
-                  <p className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
                     Walking directions are unavailable right now. The dotted line is an approximate straight-line
                     path and may cross buildings or fences. Retrying automatically.
                   </p>
@@ -388,13 +376,13 @@ function NavigationContent() {
                 {steps.map((step, index) => (
                   <div
                     key={`${step.instruction}-${index}`}
-                    className={`flex w-full gap-3 border-b-2 p-3 text-left transition ${
-                      activeIndex === index ? 'border-[#008236] bg-gray-100' : 'border-gray-200 bg-white'
+                    className={`flex w-full gap-3 rounded-xl border p-3 text-left transition ${
+                      activeIndex === index ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-white'
                     }`}
                   >
                     <div
-                      className={`flex h-8 w-8 items-center justify-center text-lg font-black flex-shrink-0 ${
-                        activeIndex === index ? 'text-[#008236]' : 'text-gray-300'
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                        activeIndex === index ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-400'
                       }`}
                     >
                       {index + 1}
@@ -414,16 +402,16 @@ function NavigationContent() {
             </div>
           </section>
 
-          <aside className="space-y-4 sm:space-y-6">
-            <div className="rounded-lg sm:rounded-2xl lg:rounded-md border border-gray-200 bg-white p-4 sm:p-5 shadow-2xl shadow-gray-200/20 backdrop-blur-md">
+          <aside className="min-w-0 space-y-4 sm:space-y-6">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-emerald-600/80">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-700">
                     Stops
                   </p>
-                  <h3 className="mt-1 text-lg sm:text-xl font-semibold text-gray-900">Campus places</h3>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Campus places</h3>
                 </div>
-                <span className="rounded-full bg-emerald-50 px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-500/20 flex-shrink-0">
+                <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-500/20">
                   Live
                 </span>
               </div>
@@ -433,16 +421,16 @@ function NavigationContent() {
                   <Link
                     key={stop.id}
                     href={`/navigation?id=${encodeURIComponent(stop.id)}`}
-                    className="group inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-gray-200 bg-gradient-to-r from-white to-gray-50 px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-sm hover:shadow-md hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                    className="group inline-flex min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md"
                   >
-                    <div className="flex-shrink-0 inline-flex h-6 sm:h-7 w-6 sm:w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 transition-transform group-hover:scale-110">
+                    <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-transform group-hover:scale-110">
                       <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </div>
                     <div className="flex flex-col gap-0 min-w-0">
-                      <div className="text-[11px] sm:text-xs font-semibold text-gray-900 leading-tight truncate">
+                      <div className="truncate text-xs font-semibold leading-tight text-slate-900">
                         {stop.name}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] text-gray-600 truncate">
+                      <div className="truncate text-[11px] text-slate-500">
                         {stop.eta} • {stop.distance}
                       </div>
                     </div>
@@ -451,13 +439,13 @@ function NavigationContent() {
               </div>
             </div>
 
-            <div className="rounded-lg sm:rounded-2xl lg:rounded-md border border-gray-200 bg-gradient-to-br from-emerald-50 via-white to-white p-4 sm:p-5 shadow-2xl shadow-emerald-200/10 backdrop-blur-md">
+            <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-4 shadow-sm sm:rounded-2xl sm:p-5">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 sm:h-11 w-9 sm:w-11 items-center justify-center rounded-lg sm:rounded-2xl bg-emerald-100 text-emerald-600 ring-1 ring-emerald-300 flex-shrink-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                   <MapPin className="h-4 sm:h-5 w-4 sm:w-5" />
                 </div>
                 <div>
-                  <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700/80">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-700">
                     Arrival
                   </p>
                   <h3 className="mt-1 text-base sm:text-lg font-semibold text-gray-900 break-words">
@@ -466,15 +454,15 @@ function NavigationContent() {
                 </div>
               </div>
 
-              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5">
-                <div className="flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-2xl border border-emerald-300 bg-emerald-50 p-2.5 sm:p-3">
+              <div className="mb-4 space-y-2 text-sm text-slate-600 sm:mb-5 sm:space-y-3">
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
                   <Users className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span className="truncate">Occupancy: {route.crowd}</span>
                 </div>
 </div>
 
-              <div className="rounded-lg sm:rounded-2xl border border-gray-300 bg-gray-50 p-3 sm:p-4 mb-4 sm:mb-5">
-                <div className="mb-2 flex items-center gap-2 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-gray-600">
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:mb-5 sm:p-4">
+                <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
                   <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Booking sync</span>
                 </div>
@@ -501,7 +489,7 @@ function NavigationContent() {
 
               <Link
                 href="/bookings"
-                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded bg-black px-4 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#008236] active:scale-95"
+                className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 active:scale-95"
               >
                 <Zap className="h-4 w-4" />
                 Book this destination
@@ -524,12 +512,12 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <div className="flex min-w-[30%] flex-1 flex-col border-2 border-black bg-white px-3 py-2">
-      <div className="flex items-center gap-1.5 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-gray-600">
+    <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-3 sm:px-3">
+      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[10px]">
         {icon}
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 truncate text-[10px] sm:text-[16px] font-black leading-none tabular-nums text-[#008236]">{value}</div>
+      <div className="mt-1 truncate text-xs font-semibold leading-none tabular-nums text-slate-900 sm:text-base">{value}</div>
     </div>
   );
 }

@@ -68,6 +68,8 @@ export default function BookingsPage() {
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingsError, setBookingsError] = useState('');
+  const [roomsError, setRoomsError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -78,11 +80,11 @@ export default function BookingsPage() {
   );
 
   const fetchBookings = useCallback(async () => {
+    setBookingsError('');
     try {
       const response = await fetch('/api/bookings');
-      if (!response.ok) throw new Error('Unable to load bookings');
-
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load bookings right now.');
       const normalized: BookingRecord[] = (data.bookings ?? []).map((booking: BookingApiRecord) => {
         const start = booking.startTime ? new Date(booking.startTime) : new Date();
         return {
@@ -99,29 +101,38 @@ export default function BookingsPage() {
         };
       });
       setBookings(normalized);
-    } catch {
+    } catch (loadError) {
       setBookings([]);
+      setBookingsError(loadError instanceof Error ? loadError.message : 'Unable to load bookings right now.');
     }
   }, []);
 
+  const fetchRooms = useCallback(async () => {
+    setRoomsError('');
+    try {
+      const response = await fetch('/api/rooms');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load rooms right now.');
+      const list: RoomOption[] = Array.isArray(data.rooms) ? data.rooms : [];
+      setRooms(list);
+      if (list.length) setDraft((current) => ({ ...current, room: current.room || list[0].name }));
+    } catch (loadError) {
+      setRooms([]);
+      setRoomsError(loadError instanceof Error ? loadError.message : 'Unable to load rooms right now.');
+    }
+  }, []);
+
+  const loadPageData = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchRooms(), isAuthenticated ? fetchBookings() : Promise.resolve()]);
+    setLoading(false);
+  }, [fetchBookings, fetchRooms, isAuthenticated]);
+
   useEffect(() => {
     if (status === 'loading') return;
-    void (async () => {
-      try {
-        const response = await fetch('/api/rooms');
-        if (response.ok) {
-          const data = await response.json();
-          const list: RoomOption[] = Array.isArray(data.rooms) ? data.rooms : [];
-          setRooms(list);
-          if (list.length) setDraft((current) => ({ ...current, room: current.room || list[0].name }));
-        }
-      } catch {
-        setRooms([]);
-      }
-      if (isAuthenticated) await fetchBookings();
-      setLoading(false);
-    })();
-  }, [status, isAuthenticated, fetchBookings]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadPageData();
+  }, [status, loadPageData]);
 
   const submitBooking = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -164,7 +175,7 @@ export default function BookingsPage() {
   };
 
   return (
-    <main className="ui-page">
+    <main className="ui-page bg-slate-50">
       <div className="mx-auto max-w-6xl">
         <PageHeader
           eyebrow="Reserve"
@@ -180,7 +191,7 @@ export default function BookingsPage() {
         />
 
         {!isAuthenticated && status !== 'loading' ? (
-          <div className="ui-card mx-auto max-w-md text-center">
+          <div className="ui-card mx-auto max-w-md !rounded-2xl !border-slate-200 !shadow-sm">
             <h2 className="text-xl font-bold">Log in to book a room</h2>
             <p className="mt-2 text-sm text-gray-600">Sign in with your student account to reserve rooms and view your bookings.</p>
             <Link href="/login" className="ui-btn ui-btn-primary mt-5 w-full">
@@ -188,10 +199,22 @@ export default function BookingsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-            <form onSubmit={submitBooking} className="ui-card h-fit space-y-4">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+            <form onSubmit={submitBooking} className="ui-card h-fit space-y-4 !rounded-2xl !border-slate-200 !p-4 !shadow-sm sm:!p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold">New booking</h2>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700">Reserve a space</p>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-900">New booking</h2>
+                </div>
+                {roomsError ? (
+                  <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <p>{roomsError}</p>
+                    <button type="button" onClick={() => void fetchRooms()} className="mt-2 min-h-9 font-semibold text-amber-900 underline underline-offset-2">
+                      Retry loading rooms
+                    </button>
+                  </div>
+                ) : null}
+
                 {selectedRoom ? (
                   <RoomStatusBadge status={selectedRoom.isAvailable === false ? 'busy' : 'available'} compact />
                 ) : null}
@@ -296,15 +319,28 @@ export default function BookingsPage() {
             </form>
 
             <section>
-              <h2 className="mb-3 text-lg font-bold">Your bookings</h2>
+              <div className="mb-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700">Your schedule</p>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-900">Your bookings</h2>
+                </div>
+                {bookings.length > 0 ? <span className="text-sm text-slate-500">{bookings.length} total</span> : null}
+              </div>
               {loading ? (
                 <div className="space-y-3" aria-busy="true">
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="h-24 animate-pulse rounded-lg bg-gray-200/70" />
+                    <div key={i} className="h-24 animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-slate-200" />
                   ))}
                 </div>
+              ) : bookingsError ? (
+                <div role="alert" className="ui-card !rounded-2xl !border-amber-200 !bg-amber-50 !text-slate-700 !shadow-sm">
+                  <p className="text-sm">{bookingsError}</p>
+                  <button type="button" onClick={() => void fetchBookings()} className="mt-3 min-h-10 rounded-lg px-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">
+                    Try again
+                  </button>
+                </div>
               ) : bookings.length === 0 ? (
-                <div className="ui-card text-center text-sm text-gray-600">
+                <div className="ui-card !rounded-2xl !border-slate-200 !text-slate-600 !shadow-sm">
                   <CalendarDays className="mx-auto mb-2 h-8 w-8 text-emerald-600" />
                   No bookings yet. Your requests will show up here.
                 </div>
@@ -314,17 +350,17 @@ export default function BookingsPage() {
                     <li key={booking.id}>
                       <Link
                         href={`/booking/${booking.id}`}
-                        className="ui-card flex items-center gap-4 !p-4 transition hover:border-emerald-300"
+                        className="ui-card flex min-w-0 items-center gap-3 !rounded-2xl !border-slate-200 !p-4 !shadow-sm transition hover:!border-emerald-300 hover:!shadow-md sm:gap-4"
                       >
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12">
                           <CalendarDays className="h-6 w-6" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="flex items-center gap-2">
-                            <span className="truncate font-bold">{booking.purpose}</span>
+                          <span className="flex min-w-0 flex-wrap items-center gap-2">
+                            <span className="min-w-0 break-words font-semibold text-slate-900">{booking.purpose}</span>
                             <span className={statusBadgeClass(booking.status)}>{booking.status}</span>
                           </span>
-                          <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+                          <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 sm:text-sm">
                             <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{booking.room}</span>
                             <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />{booking.date} · {booking.time}</span>
                             <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" />{booking.attendees}</span>

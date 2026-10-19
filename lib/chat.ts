@@ -11,6 +11,7 @@ export type ChatConversation = {
   id: string;
   type: "direct" | "group";
   title: string;
+  createdBy?: string;
   members: ChatMember[];
   lastMessage: { text: string; senderId: string; createdAt: string } | null;
   unread: number;

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Notification from "@/lib/database/models/Notification";
 import type { NotificationResponse } from "@/lib/notifications";
 
@@ -74,14 +75,7 @@ export async function GET(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch notifications",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.get", "Unable to load notifications right now.");
   }
 }
 
@@ -155,13 +149,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error("Error creating notification:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to create notification",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.create", "Unable to create this notification right now.");
   }
 }

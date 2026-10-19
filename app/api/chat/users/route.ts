@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { connectToDatabase } from "@/lib/database";
+import { withDatabaseErrorHandling } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 import { getChatUserId } from "@/lib/chat";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export const GET = withDatabaseErrorHandling(async function GET(request: Request) {
   const userId = await getChatUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -41,4 +42,4 @@ export async function GET(request: Request) {
   return NextResponse.json({
     users: sorted.slice(0, 20).map((u) => ({ id: u._id.toString(), name: u.name, program: u.program, year: u.year })),
   });
-}
+}, "chat.users.get", "Unable to load students right now.");

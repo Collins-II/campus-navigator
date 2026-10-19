@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 
 const defaultNotificationSettings = {
@@ -41,7 +42,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load settings." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.settings.get", "Unable to load your settings right now.");
   }
 }
 
@@ -82,6 +83,6 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update settings." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.settings.update", "Unable to update your settings right now.");
   }
 }

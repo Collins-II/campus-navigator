@@ -1,0 +1,53 @@
+.actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions :global(.ui-btn) {
+  min-height: 44px;
+  max-width: 100%;
+  border-radius: 9999px;
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.actions :global(.ui-btn-secondary) {
+  border: 1px solid transparent;
+  background: #fff;
+  color: #334155;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.actions :global(.ui-btn-primary) {
+  background: #059669;
+  box-shadow: 0 10px 15px -3px rgb(6 78 59 / 0.15);
+}
+
+.actions :global(.ui-btn-primary):hover:not(:disabled) {
+  background: #047857;
+}
+.actions :global(.ui-btn-secondary):hover:not(:disabled) {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.actions :global(.ui-btn):focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .actions {
+    justify-content: flex-end;
+  }
+}

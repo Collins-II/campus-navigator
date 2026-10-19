@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { connectToDatabase } from "@/lib/database";
+import { withDatabaseErrorHandling } from "@/lib/database/errors";
 import Conversation from "@/lib/database/models/Conversation";
 import Message from "@/lib/database/models/Message";
 import User from "@/lib/database/models/User";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 type PopulatedMember = { _id: { toString(): string }; name: string; program?: string };
 
-export async function GET() {
+export const GET = withDatabaseErrorHandling(async function GET() {
   const userId = await getChatUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -39,6 +40,7 @@ export async function GET() {
       return {
         id: c._id.toString(),
         type: c.type,
+        createdBy: c.createdBy.toString(),
         title: c.type === "group" ? c.name || "Group chat" : others[0]?.name || "Student",
         members,
         lastMessage: c.lastMessage?.text
@@ -55,9 +57,9 @@ export async function GET() {
   );
 
   return NextResponse.json({ conversations: result });
-}
+}, "chat.conversations.get", "Unable to load your conversations right now.");
 
-export async function POST(request: Request) {
+export const POST = withDatabaseErrorHandling(async function POST(request: Request) {
   const userId = await getChatUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -85,7 +87,10 @@ export async function POST(request: Request) {
           createdBy: userId,
           directKey,
         });
-      } catch {
+      } catch (error) {
+        if (!error || typeof error !== "object" || !("code" in error) || error.code !== 11000) {
+          throw error;
+        }
         conversation = await Conversation.findOne({ directKey });
       }
     }
@@ -102,4 +107,4 @@ export async function POST(request: Request) {
     createdBy: userId,
   });
   return NextResponse.json({ id: conversation._id.toString() }, { status: 201 });
-}
+}, "chat.conversations.create", "Unable to create this conversation right now.");

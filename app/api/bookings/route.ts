@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 
@@ -47,10 +48,7 @@ export async function GET() {
       }),
     }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch bookings" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "bookings.get", "Unable to load your bookings right now.");
   }
 }
 
@@ -114,9 +112,6 @@ export async function POST(request: Request) {
       },
     }, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create booking" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "bookings.create", "Unable to create this booking right now.");
   }
 }

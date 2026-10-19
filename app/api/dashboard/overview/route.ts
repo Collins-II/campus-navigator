@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 import User from "@/lib/database/models/User";
@@ -85,11 +86,6 @@ export async function GET() {
       bookings: mappedBookings,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Unable to load dashboard data.",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "dashboard.overview", "Unable to load your dashboard right now.");
   }
 }

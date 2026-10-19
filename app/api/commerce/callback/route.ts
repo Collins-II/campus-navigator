@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database";
+import { withDatabaseErrorHandling } from "@/lib/database/errors";
 import CommerceOrder from "@/lib/database/models/CommerceOrder";
 import { parseDpoCallback, verifyDpoToken } from "@/lib/dpo";
 
-export async function POST(request: Request) {
+export const POST = withDatabaseErrorHandling(async function POST(request: Request) {
   const callback = await parseDpoCallback(request);
   if (!callback.reference) return NextResponse.json({ error: "Missing order reference." }, { status: 400 });
   await connectToDatabase();
@@ -24,4 +25,4 @@ export async function POST(request: Request) {
   }
   await order.save();
   return NextResponse.json({ received: true });
-}
+}, "commerce.callback", "Unable to process the payment notification right now.");

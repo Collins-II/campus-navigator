@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import CommerceOrder from "@/lib/database/models/CommerceOrder";
 import User from "@/lib/database/models/User";
 import { createDpoCheckout } from "@/lib/dpo";
@@ -34,6 +35,6 @@ export async function POST(request: Request) {
     await order.save();
     return NextResponse.json({ reference, paymentUrl: checkout.paymentUrl });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to start checkout." }, { status: 500 });
+    return apiErrorResponse(error, "commerce.checkout", "Unable to start checkout right now.");
   }
 }

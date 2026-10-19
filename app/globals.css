@@ -187,23 +187,28 @@ h1, h2, h3 { letter-spacing: -0.02em; }
   padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem; border-bottom: 3px solid oklch(52.7% 0.154 150.069);
 }
 
-/* Dashboard action tiles: grid on mobile, list on desktop */
+/* Dashboard navigation remains easy to scan and tap at every viewport size. */
+.dash-nav { display: flex; flex-direction: column; gap: .4rem; }
 .dash-nav > button, .dash-nav > a {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: .5rem;
-  min-height: 84px; padding: .75rem; margin: 0 0 0 0; border-radius: 4px !important;
-  border: 2px solid #052e16 !important; background: #fff !important; color: #052e16 !important;
-  font-size: 11px !important; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+  display: flex; flex-direction: row; align-items: center; gap: .75rem;
+  min-height: 46px; width: 100%; padding: .65rem .8rem; margin: 0;
+  border: 1px solid #e2e8f0 !important; border-radius: .75rem !important;
+  background: #fff !important; color: #334155 !important;
+  font-size: .875rem !important; font-weight: 500; letter-spacing: 0; text-transform: none;
+  transition: background-color .15s, border-color .15s, color .15s;
 }
-.dash-nav > button:hover, .dash-nav > a:hover { background: #052e16 !important; color: #fff !important; }
-.dash-nav > a[href="/commerce"] { background: oklch(52.7% 0.154 150.069) !important; border-color: oklch(52.7% 0.154 150.069) !important; color: #fff !important; }
-.dash-nav > a[href="/commerce"]:hover { background: #016630 !important; border-color: #016630 !important; }
-.dash-nav > button:last-child { border-color: #b91c1c !important; color: #b91c1c !important; }
-.dash-nav > button:last-child:hover { background: #b91c1c !important; color: #fff !important; }
-@media (min-width: 1024px) {
-  .dash-menu-btn { display: none !important; }
-  .dash-nav > button, .dash-nav > a { flex-direction: row; align-items: center; min-height: 44px; width: 100%; margin-top: .5rem; }
+.dash-nav > button:hover, .dash-nav > a:hover {
+  border-color: #a7f3d0 !important; background: #f0fdf4 !important; color: #065f46 !important;
 }
+.dash-nav > a[href="/commerce"] {
+  border-color: #a7f3d0 !important; background: #f0fdf4 !important; color: #047857 !important;
+}
+.dash-nav > a[href="/commerce"]:hover { background: #dcfce7 !important; }
+.dash-nav > button:last-child {
+  margin-top: .4rem; border-color: #fecaca !important; background: #fff7f7 !important; color: #b91c1c !important;
+}
+.dash-nav > button:last-child:hover { background: #fef2f2 !important; }
+@media (min-width: 1024px) { .dash-menu-btn { display: none !important; } }
 
 /* Leaflet sits below overlays */
 .leaflet-container { font-family: inherit; z-index: 0; }
-

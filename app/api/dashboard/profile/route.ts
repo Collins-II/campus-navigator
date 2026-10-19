@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 
 export async function GET() {
@@ -34,7 +35,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load profile." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.profile.get", "Unable to load your profile right now.");
   }
 }
 
@@ -85,6 +86,6 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update profile." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.profile.update", "Unable to update your profile right now.");
   }
 }

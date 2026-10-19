@@ -1,7 +1,8 @@
-//import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import styles from './PageHeader.module.css';
+import { CampusNavbar } from './CampusNavbar';
 
 type PageHeaderProps = {
   eyebrow?: string;
@@ -11,28 +12,29 @@ type PageHeaderProps = {
   actions?: ReactNode;
 };
 
-/** Consistent top section for every inner page. */
 export function PageHeader({ eyebrow = 'Campus Navigator', title, subtitle, backHref = '/', actions }: PageHeaderProps) {
   return (
-    <header className="-mx-4 -mt-4 mb-6 flex flex-col gap-4 border-b-[3px] border-[#008236] bg-black px-4 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] text-white md:mx-0 md:mt-0 md:flex-row md:items-end md:justify-between md:rounded-md md:px-6">
-      <div className="flex items-start gap-3">
-        <Link
-          href={backHref}
-          aria-label="Back"
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white text-white transition hover:bg-white hover:text-black active:scale-95"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#4ade80]">
-            {/*<Image src="/images/unza_logo.jpg" alt="" width={36} height={36} className="rounded-full" />*/}
-            {eyebrow}
-          </p>
-          <h1 className="mt-1 text-3xl font-black uppercase leading-none tracking-tight text-white">{title}</h1>
-          {subtitle ? <p className="mt-2 max-w-xl text-sm text-gray-300">{subtitle}</p> : null}
+    <header className="relative z-10 mb-6 min-w-0 pt-[env(safe-area-inset-top)]">
+      <CampusNavbar />
+      <div className="mt-6 flex min-w-0 flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <Link
+            href={backHref}
+            aria-label="Back"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-lg shadow-black/10 transition-colors hover:bg-emerald-50 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+          >
+            <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-[10px] font-semibold uppercase leading-5 tracking-[0.16em] text-emerald-700 sm:text-[11px]">
+              {eyebrow}
+            </p>
+            <h1 className="mt-1 break-words text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+            {subtitle ? <p className="mt-2 max-w-2xl break-words text-sm leading-relaxed text-slate-500">{subtitle}</p> : null}
+          </div>
         </div>
+        {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
   );
 }

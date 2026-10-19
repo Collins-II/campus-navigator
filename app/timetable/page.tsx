@@ -140,10 +140,10 @@ export default function TimetablePage() {
         backHref="/dashboard"
         actions={
           <>
-            <button type="button" disabled={!rows.length} onClick={() => download('timetable.csv', toCsv(rows), 'text/csv')} className="ui-btn border border-white/30 text-white hover:bg-white/10">
+            <button type="button" disabled={!rows.length} onClick={() => download('timetable.csv', toCsv(rows), 'text/csv')} className="ui-btn ui-btn-secondary">
               <Download aria-hidden="true" className="h-4 w-4" /> CSV
             </button>
-            <button type="button" disabled={!rows.length} onClick={() => download('timetable.ics', toIcs(rows), 'text/calendar')} className="ui-btn border border-white/30 text-white hover:bg-white/10">
+            <button type="button" disabled={!rows.length} onClick={() => download('timetable.ics', toIcs(rows), 'text/calendar')} className="ui-btn ui-btn-secondary">
               <CalendarDays aria-hidden="true" className="h-4 w-4" /> Calendar
             </button>
             <button type="button" disabled={!rows.length || exporting} aria-busy={exporting} onClick={downloadPdf} className="ui-btn ui-btn-primary">

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Trash2, Check, CheckCircle, AlertCircle, Clock, DoorOpen, DollarSign, MessageSquare, Megaphone, Wrench } from 'lucide-react';
+import { Trash2, Check, CheckCircle, AlertCircle, Clock, DoorOpen, DollarSign, MessageSquare, Megaphone, Wrench } from 'lucide-react';
 import { useNotifications } from '@/lib/useNotifications';
 import { formatNotificationTime, notificationIconMap, notificationColorMap } from '@/lib/notifications';
 import type { NotificationResponse } from '@/lib/notifications';
 import { NotificationPreferencesModal } from '@/components/notifications/NotificationPreferencesModal';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const iconComponents: Record<string, React.ReactNode> = {
   CheckCircle: <CheckCircle className="w-5 h-5" />,
@@ -25,6 +25,7 @@ export default function NotificationsPage() {
     notifications,
     unreadCount,
     loading,
+    error,
     fetchNotifications,
     markAsRead,
     markAsUnread,
@@ -55,35 +56,10 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-white pb-28">
-      {/* Header */}
-      <div className="sticky top-0 z-40 border-b-[3px] border-[#008236] bg-black text-white">
-        <div className="max-w-4xl mx-auto px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                aria-label="Back"
-                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-3xl font-black uppercase leading-none tracking-tight">Notifications</h1>
-                <p className="mt-1 text-xs font-bold uppercase tracking-widest text-[#4ade80]">
-                  {unreadCount > 0
-                    ? `${unreadCount} unread`
-                    : 'All caught up!'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setPreferencesOpen(true)}
-              className="border-2 border-white px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white hover:bg-white hover:text-black"
-            >
-              Prefs
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto max-w-6xl px-4 pt-4 md:px-8 md:pt-8">
+        <PageHeader title="Notifications" backHref="/dashboard" subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'} actions={
+          <button type="button" onClick={() => setPreferencesOpen(true)} className="ui-btn ui-btn-secondary">Preferences</button>
+        } />
       </div>
 
       {/* Main Content */}
@@ -147,6 +123,18 @@ export default function NotificationsPage() {
         </div>
 
         {/* Notifications List */}
+        {error ? (
+          <div role="alert" className="mb-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-amber-900">{error}</p>
+            <button
+              type="button"
+              onClick={() => void fetchNotifications(filter)}
+              className="min-h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
         <div className="space-y-3">
           {loading ? (
             <div className="flex items-center justify-center py-12">

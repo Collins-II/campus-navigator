@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Notification from "@/lib/database/models/Notification";
 
 export async function GET() {
@@ -36,14 +37,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching notification stats:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch notification stats",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.unread.get", "Unable to load notification status right now.");
   }
 }
 
@@ -80,13 +74,6 @@ export async function POST() {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to update notifications",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.unread.update", "Unable to update notifications right now.");
   }
 }

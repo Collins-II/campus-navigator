@@ -5,6 +5,11 @@ import type {
   NotificationPriority,
 } from "@/lib/notifications";
 
+async function responseError(response: Response, fallback: string) {
+  const data = await response.json().catch(() => null);
+  return typeof data?.error === "string" ? data.error : fallback;
+}
+
 export interface UseNotificationsReturn {
   notifications: NotificationResponse[];
   unreadCount: number;
@@ -39,12 +44,14 @@ export const useNotifications = (): UseNotificationsReturn => {
   const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications/unread");
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.unreadCount);
+      if (!response.ok) {
+        setError("Notification status is temporarily unavailable.");
+        return;
       }
-    } catch (err) {
-      console.error("Failed to fetch unread count:", err);
+      const data = await response.json();
+      setUnreadCount(data.unreadCount);
+    } catch {
+      setError("Notification status is temporarily unavailable.");
     }
   }, []);
 
@@ -57,17 +64,16 @@ export const useNotifications = (): UseNotificationsReturn => {
         const response = await fetch(
           `/api/notifications?filter=${filter}&limit=50&skip=0`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data.notifications);
-          await fetchUnreadCount();
-        } else {
-          setError("Failed to fetch notifications");
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          setError(data?.error || "Unable to load notifications right now.");
+          return;
         }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to fetch notifications";
-        setError(message);
+        const data = await response.json();
+        setNotifications(data.notifications);
+        await fetchUnreadCount();
+      } catch {
+        setError("Unable to load notifications right now.");
       } finally {
         setLoading(false);
       }
@@ -83,16 +89,19 @@ export const useNotifications = (): UseNotificationsReturn => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isRead: true }),
       });
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === id ? { ...n, isRead: true, readAt: new Date() } : n
-          )
-        );
-        await fetchUnreadCount();
+      if (!response.ok) {
+        setError(await responseError(response, "Unable to update this notification."));
+        return;
       }
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: true, readAt: new Date() } : n
+        )
+      );
+      setError(null);
+      await fetchUnreadCount();
+    } catch {
+      setError("Unable to update this notification right now.");
     }
   }, [fetchUnreadCount]);
 
@@ -104,16 +113,19 @@ export const useNotifications = (): UseNotificationsReturn => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isRead: false }),
       });
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === id ? { ...n, isRead: false, readAt: null } : n
-          )
-        );
-        await fetchUnreadCount();
+      if (!response.ok) {
+        setError(await responseError(response, "Unable to update this notification."));
+        return;
       }
-    } catch (err) {
-      console.error("Failed to mark notification as unread:", err);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, isRead: false, readAt: null } : n
+        )
+      );
+      setError(null);
+      await fetchUnreadCount();
+    } catch {
+      setError("Unable to update this notification right now.");
     }
   }, [fetchUnreadCount]);
 
@@ -123,12 +135,15 @@ export const useNotifications = (): UseNotificationsReturn => {
       const response = await fetch(`/api/notifications/${id}`, {
         method: "DELETE",
       });
-      if (response.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-        await fetchUnreadCount();
+      if (!response.ok) {
+        setError(await responseError(response, "Unable to delete this notification."));
+        return;
       }
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setError(null);
+      await fetchUnreadCount();
+    } catch {
+      setError("Unable to delete this notification right now.");
     }
   }, [fetchUnreadCount]);
 
@@ -138,18 +153,21 @@ export const useNotifications = (): UseNotificationsReturn => {
       const response = await fetch("/api/notifications/unread", {
         method: "POST",
       });
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => ({
-            ...n,
-            isRead: true,
-            readAt: new Date(),
-          }))
-        );
-        setUnreadCount(0);
+      if (!response.ok) {
+        setError(await responseError(response, "Unable to update notifications."));
+        return;
       }
-    } catch (err) {
-      console.error("Failed to mark all as read:", err);
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date(),
+        }))
+      );
+      setUnreadCount(0);
+      setError(null);
+    } catch {
+      setError("Unable to update notifications right now.");
     }
   }, []);
 
@@ -178,13 +196,16 @@ export const useNotifications = (): UseNotificationsReturn => {
             ...options,
           }),
         });
-        if (response.ok) {
-          const newNotification = await response.json();
-          setNotifications((prev) => [newNotification, ...prev]);
-          await fetchUnreadCount();
+        if (!response.ok) {
+          setError(await responseError(response, "Unable to create this notification."));
+          return;
         }
-      } catch (err) {
-        console.error("Failed to create notification:", err);
+        const newNotification = await response.json();
+        setNotifications((prev) => [newNotification, ...prev]);
+        setError(null);
+        await fetchUnreadCount();
+      } catch {
+        setError("Unable to create this notification right now.");
       }
     },
     [fetchUnreadCount]

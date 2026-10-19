@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dns from "dns";
+import { MongoConnectionError } from "@/lib/database/errors";
 
 // Prefer public DNS resolution for Atlas SRV lookups when the runtime network is restricted.
 dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -15,7 +16,7 @@ const MONGODB_URI = (
 
 export function getMongoConnectionDiagnostics() {
   return {
-    uri: MONGODB_URI ? MONGODB_URI.replace(/:([^@]+)@/, ":***@") : "MONGODB_URI is not set",
+    isConfigured: Boolean(MONGODB_URI),
     isAtlasUri: /mongodb\+srv:\/\//i.test(MONGODB_URI),
     usesLocalhost: /localhost|127\.0\.0\.1/i.test(MONGODB_URI),
     envSource: process.env.MONGODB_URI
@@ -43,41 +44,53 @@ if (!globalThis.mongooseCache) {
 }
 
 export async function connectToDatabase() {
+  const diagnostics = getMongoConnectionDiagnostics();
   if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is missing. Configure a production MongoDB Atlas connection string before starting the app.");
+    console.error("MongoDB configuration is missing.", diagnostics);
+    throw new MongoConnectionError("configuration");
   }
 
   if (/localhost|127\.0\.0\.1/i.test(MONGODB_URI)) {
-    throw new Error("MONGODB_URI must target your managed MongoDB Atlas or cloud deployment, not a local development instance.");
-  }
-
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 15000,
-      autoIndex: true,
-    });
+    console.error("MongoDB configuration is invalid for this deployment.", diagnostics);
+    throw new MongoConnectionError("configuration");
   }
 
   try {
+    if (mongoose.connection.readyState === 1) {
+      cached.conn = mongoose;
+      return cached.conn;
+    }
+
+    if (mongoose.connection.readyState === 2) {
+      cached.conn = null;
+      cached.promise ??= mongoose.connection.asPromise().then(() => mongoose);
+    } else {
+      cached.conn = null;
+      cached.promise = null;
+      cached.promise = mongoose.connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 15000,
+        autoIndex: true,
+      });
+    }
+
     cached.conn = await cached.promise;
+    cached.promise = null;
     return cached.conn;
   } catch (error) {
     cached.promise = null;
-    const message = error instanceof Error ? error.message : "Unknown MongoDB connection error";
-    const diagnostics = getMongoConnectionDiagnostics();
+    cached.conn = null;
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    const errorCode =
+      error && typeof error === "object" && "code" in error &&
+      (typeof error.code === "string" || typeof error.code === "number")
+        ? error.code
+        : undefined;
 
     console.error("MongoDB connection failed:", {
       ...diagnostics,
-      message,
+      errorName,
+      errorCode,
     });
-
-    throw new Error(
-      "MongoDB connection failed. Check that your Atlas cluster is running, your current IP is whitelisted in Network Access, and MONGODB_URI is valid. Details: " +
-        message
-    );
+    throw new MongoConnectionError("unavailable");
   }
 }

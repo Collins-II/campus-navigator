@@ -7,11 +7,13 @@
     "build": "next build",
     "start": "next start",
     "test:timetable": "node --test lib/timetable-pdf.test.mjs",
+    "test:circles": "node --experimental-test-module-mocks --experimental-transform-types --test lib/study-circles.test.mjs lib/study-circle-api.test.mjs",
     "lint": "eslint"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
     "bcryptjs": "^3.0.3",
+    "fflate": "^0.8.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
     "leaflet": "^1.9.4",

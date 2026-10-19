@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Shared page navigation
+
+The homepage and all non-dashboard pages share [CampusNavbar](./components/ui/CampusNavbar.tsx) for the UNZA brand, desktop navigation, notifications and account actions. [PageHeader](./components/ui/PageHeader.tsx) adds page titles, back links and optional actions beneath that navbar; chat uses the navbar above its split-pane layout. Mobile pages retain the bottom navigation. The dashboard keeps its independent navigation design.
+
 ## Student timetable
 
 The `/timetable` page presents published sessions in a day-grouped table, sorted by start time. Filter by department, academic year, semester and cohort to find the relevant classes; the university schedule is not automatically limited to enrolled courses. On smaller screens, scroll the table horizontally while the time column stays visible.
@@ -25,6 +29,26 @@ The `/timetable` page presents published sessions in a day-grouped table, sorted
 Timetables require an authenticated student session and a configured campus-data integration. Announcements remain visible beside the schedule on wide screens and below it on smaller screens. Check the live page for schedule changes after downloading.
 
 Run `npm run test:timetable` with Node.js 22.18+ (or Node.js 24+) to check PDF contents, pagination, missing details and empty-export handling.
+
+## MongoDB availability
+
+Configure `MONGODB_URI` (or the supported `MONGODB_URL` / `DATABASE_URL` fallback) in the deployment environment. If MongoDB is unreachable, Mongo-backed API routes return a retryable `503` response with a user-safe message and `Retry-After` header; validation and duplicate-record failures return `400` and `409` respectively. Connection and server errors are logged with operation and error type, not the connection string or raw database message. Check the deployment logs, confirm the cluster is available, and verify its network access and credentials before retrying.
+
+## Study Circles
+
+On `/chat`, select two or more other students when starting a conversation to create a named Study Circle. Existing group chats also have a **Circle board** tab; direct messages keep their normal conversation view.
+
+- Share future study sessions at published campus locations, RSVP and open campus directions. Times use each student's local timezone. A meetup is a plan, **not a room reservation**; use `/bookings` when a reservation is needed.
+- Plan revision topics or meeting times with 2–6-option polls. Each member has one changeable vote. Votes and RSVPs are visible to circle members, not anonymous.
+- Keep useful HTTP(S) links or upload **PDF and DOCX documents (up to 4 MB each)** in the **Resource shelf**. Choose **Pinned resource → Upload file**, select a document, and add a title/details. Files show their name and size with a download action; links still open external websites.
+
+Activities are stored in MongoDB and restricted to authenticated members of the group. Authors can remove their activities; the circle creator can remove any activity. The board refreshes every 15 seconds while visible, with cursor pagination and server-side filters. Board activities do not create chat messages or unread-message notifications; check the board for updates.
+
+Documents are stored as binary data within their resource record in MongoDB, not on the deployment filesystem or a public URL. Deleting the resource deletes its file in the same operation. List responses exclude the binary data, and each download rechecks membership and is served as a private, non-cached attachment. No extra storage credentials are required, but uploads count against database storage and transfer limits; monitor usage before scaling this to a large student population.
+
+Uploads are size-bounded on the client and server. The server checks filenames, PDF signatures/end markers and DOCX package contents with limits on archive expansion; legacy `.doc`, macro-enabled and encrypted Word documents are not supported. These checks are **not antivirus scanning**. Only share material you have permission to share, and download documents only from people you trust. The multipart request limit includes 64 KB of overhead above the 4 MB file limit; your hosting provider may impose additional limits.
+
+Run `npm run test:circles` with Node.js 24+ for input validation and API tests using mocked authentication and database operations. These tests never access a live MongoDB database. The API tests use Node's experimental module-mocking and TypeScript-transform flags.
 
 ## Campus commerce and DPO
 

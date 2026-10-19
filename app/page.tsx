@@ -1,17 +1,14 @@
 ﻿'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Building2,
   CalendarDays,
   Clock,
   Footprints,
-  LogIn,
-  LogOut,
   Locate,
   MapPin,
   Navigation,
@@ -20,8 +17,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { NotificationBell } from '@/components/notifications';
-import { useNotifications } from '@/lib/useNotifications';
+import { CampusNavbar } from '@/components/ui/CampusNavbar';
 import { calculateDistance } from '@/lib/useGeolocation';
 import { useUserLocation } from '@/lib/LocationContext';
 import type { CampusRouteInfo } from '@/components/Map';
@@ -73,7 +69,6 @@ const walkMinutes = (seconds: number) => Math.max(1, Math.round(seconds / 60));
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const { unreadCount } = useNotifications();
   const { location: userLocation, tracking, loading: locating, error: locationError, startTracking } = useUserLocation();
 
   const [locations, setLocations] = useState<CampusLocation[]>([]);
@@ -82,7 +77,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [rooms, setRooms] = useState<RoomRecord[]>([]);
+  const [roomsUnavailable, setRoomsUnavailable] = useState(false);
   const [bookings, setBookings] = useState<DashboardBooking[]>([]);
+  const [homeDataError, setHomeDataError] = useState('');
   const [snap, setSnap] = useState<'peek' | 'half' | 'full'>('half');
   const [reloadKey, setReloadKey] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -132,19 +129,42 @@ export default function Home() {
   const loadHomeData = useCallback(
     async (signal?: AbortSignal) => {
       const todayKey = getLocalDateKey(new Date());
-      const roomsTask = fetch(`/api/rooms?date=${todayKey}&start=09:00&end=17:00`, { signal })
-        .then((res) => (res.ok ? res.json() : Promise.reject(new Error('rooms'))))
-        .then((data) => setRooms(Array.isArray(data.rooms) ? data.rooms : []))
-        .catch(() => undefined);
+      const roomsTask = async () => {
+        try {
+          const response = await fetch(`/api/rooms?date=${todayKey}&start=09:00&end=17:00`, { signal });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Room availability could not be loaded.');
+          setRooms(Array.isArray(data.rooms) ? data.rooms : []);
+          setRoomsUnavailable(false);
+          return '';
+        } catch {
+          if (signal?.aborted) return '';
+          setRooms([]);
+          setRoomsUnavailable(true);
+          return 'Room availability is temporarily unavailable.';
+        }
+      };
 
-      const bookingsTask = isAuthenticated
-        ? fetch('/api/dashboard/overview', { signal })
-            .then((res) => (res.ok ? res.json() : Promise.reject(new Error('overview'))))
-            .then((data) => setBookings(Array.isArray(data.bookings) ? data.bookings : []))
-            .catch(() => undefined)
-        : Promise.resolve(setBookings([]));
+      const bookingsTask = async () => {
+        if (!isAuthenticated) {
+          setBookings([]);
+          return '';
+        }
+        try {
+          const response = await fetch('/api/dashboard/overview', { signal });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Your bookings could not be loaded.');
+          setBookings(Array.isArray(data.bookings) ? data.bookings : []);
+          return '';
+        } catch {
+          if (signal?.aborted) return '';
+          setBookings([]);
+          return 'Your booking summary is temporarily unavailable.';
+        }
+      };
 
-      await Promise.all([roomsTask, bookingsTask]);
+      const errors = await Promise.all([roomsTask(), bookingsTask()]);
+      if (!signal?.aborted) setHomeDataError(errors.filter(Boolean).join(' '));
     },
     [isAuthenticated]
   );
@@ -221,58 +241,14 @@ export default function Home() {
       />
 
       {/* Top bar */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center justify-between gap-3 p-4 md:p-6">
-        <Link
-          href="/"
-          className="pointer-events-auto flex items-center gap-2.5 border-b-[3px] border-[#0d7739] bg-transparent backdrop-blur-md py-1.5 pl-1.5 pr-4 shadow-lg shadow-black/30"
-        >
-          <Image src="/images/unza_logo.jpg" width={36} height={36} alt="UNZA" className="rounded-full" />
-          <span className="text-sm font-black uppercase tracking-wider text-[#0d7739]">UNZA<span className="text-black">Nav</span></span>
-        </Link>
-
-        <div className="pointer-events-auto flex items-center gap-2">
-          <nav className="hidden items-center gap-1 rounded-full bg-white p-1 shadow-lg shadow-black/10 xl:flex">
-            <Link href="/navigation" className="rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-100">
-              Navigate
-            </Link>
-            <Link href="/bookings" className="rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-100">
-              Bookings
-            </Link>
-            {isAuthenticated && (
-              <Link href="/dashboard" className="rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-100">
-                Dashboard
-              </Link>
-            )}
-          </nav>
-          {isAuthenticated && (
-            <div className="rounded-full bg-white shadow-lg shadow-black/10">
-              <NotificationBell unreadCount={unreadCount} />
-            </div>
-          )}
-          {isAuthenticated ? (
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: '/' })}
-              aria-label="Log out"
-              className="hidden h-11 items-center gap-2 rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white shadow-lg shadow-emerald-900/15 xl:flex"
-            >
-              <LogOut className="h-4 w-4" /> Log out
-            </button>
-          ) : (
-            <Link
-              href="/login"
-              className="flex h-11 items-center gap-2 rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/15 active:scale-95"
-            >
-              <LogIn className="h-4 w-4" /> Log in
-            </Link>
-          )}
-        </div>
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-[1000] p-4 md:p-6">
+        <CampusNavbar />
       </header>
 
       {/* Bottom sheet (mobile) / side panel (desktop) */}
       <section
         aria-label="Campus places"
-        className={`absolute inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-[1000] flex flex-col overflow-hidden rounded-t-2xl border-t-4 border-[#008236] bg-white shadow-[0_-12px_40px_rgba(5,46,22,0.25)] transition-[height] duration-300 ease-out xl:inset-x-auto xl:bottom-6 xl:left-6 xl:top-24 xl:h-auto xl:w-[420px] xl:rounded-md xl:shadow-2xl ${
+        className={`absolute inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-[999] flex flex-col overflow-hidden rounded-t-2xl border-t-4 border-[#008236] bg-white shadow-[0_-12px_40px_rgba(5,46,22,0.25)] transition-[height] duration-300 ease-out xl:inset-x-auto xl:bottom-6 xl:left-6 xl:top-24 xl:h-auto xl:w-[420px] xl:rounded-md xl:shadow-2xl ${
           snap === 'peek'
             ? 'h-auto'
             : snap === 'half'
@@ -307,7 +283,7 @@ export default function Home() {
         <div className="shrink-0 px-4 pb-2 pt-0 xl:px-5 xl:pt-5">
           <div className={snap === 'peek' ? 'hidden xl:block' : ''}>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#008236]">
-              {locationsState === 'ready' ? `${results.length} places` : 'Campus'} · {freeRooms} rooms free
+              {locationsState === 'ready' ? `${results.length} places` : 'Campus'} · {roomsUnavailable ? 'Room availability unavailable' : `${freeRooms} rooms free`}
             </p>
             <h1 className="text-2xl font-black uppercase leading-none tracking-tight sm:text-3xl">
               {isAuthenticated ? `Hi ${firstName}, where to?` : 'Where to on campus?'}
@@ -338,6 +314,19 @@ export default function Home() {
               </button>
             )}
           </div>
+
+          {homeDataError ? (
+            <div role="alert" className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+              <p className="text-xs leading-relaxed text-amber-900">{homeDataError}</p>
+              <button
+                type="button"
+                onClick={() => void loadHomeData()}
+                className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+              >
+                Retry
+              </button>
+            </div>
+          ) : null}
 
           {categories.length > 1 && (
             <div className={`-mx-4 mt-2 gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] xl:-mx-5 xl:px-5 ${snap === 'peek' ? 'hidden xl:flex' : 'flex'}`}>

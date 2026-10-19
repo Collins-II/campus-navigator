@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 
 export interface NotificationPreferences {
@@ -39,14 +40,7 @@ export async function GET() {
 
     return NextResponse.json(preferences, { status: 200 });
   } catch (error) {
-    console.error("Error fetching notification preferences:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch preferences",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.preferences.get", "Unable to load notification preferences right now.");
   }
 }
 
@@ -96,13 +90,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(user.notifications, { status: 200 });
   } catch (error) {
-    console.error("Error updating notification preferences:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to update preferences",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.preferences.update", "Unable to update notification preferences right now.");
   }
 }

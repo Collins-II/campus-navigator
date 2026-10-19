@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 
 export async function GET() {
@@ -31,7 +32,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to load payment details." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.payments.get", "Unable to load payment details right now.");
   }
 }
 
@@ -78,6 +79,6 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update payment details." }, { status: 500 });
+    return apiErrorResponse(error, "dashboard.payments.update", "Unable to update payment details right now.");
   }
 }

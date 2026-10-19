@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import User from "@/lib/database/models/User";
 
 export async function POST(request: Request) {
@@ -74,20 +75,9 @@ export async function POST(request: Request) {
         { status: 201 }
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown database error";
-      console.error("Database registration failed:", message);
-
-      return NextResponse.json(
-        {
-          error:
-            "MongoDB registration failed. Please verify that your Atlas cluster is running, your current IP is allowed in Network Access, and the MONGODB_URI environment variable is correct.",
-          details: message,
-        },
-        { status: 503 }
-      );
+      return apiErrorResponse(error, "register.create", "Unable to create your account right now.");
     }
   } catch (error) {
-    console.error("Registration failed:", error);
-    return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
+    return apiErrorResponse(error, "register.request", "Unable to complete registration right now.");
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import Conversation from "@/lib/database/models/Conversation";
 import Message from "@/lib/database/models/Message";
+import { withDatabaseErrorHandling } from "@/lib/database/errors";
 import { getChatUserId, getMemberConversation, isObjectId, type ChatMessage } from "@/lib/chat";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ async function markRead(conversationId: string, userId: string) {
   }
 }
 
-export async function GET(request: Request, { params }: Ctx) {
+export const GET = withDatabaseErrorHandling(async function GET(request: Request, { params }: Ctx) {
   const userId = await getChatUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -50,9 +51,9 @@ export async function GET(request: Request, { params }: Ctx) {
 
   await markRead(id, userId);
   return NextResponse.json({ messages, hasMore: !after && docs.length === 50 });
-}
+}, "chat.messages.get", "Unable to load messages right now.");
 
-export async function POST(request: Request, { params }: Ctx) {
+export const POST = withDatabaseErrorHandling(async function POST(request: Request, { params }: Ctx) {
   const userId = await getChatUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -82,4 +83,4 @@ export async function POST(request: Request, { params }: Ctx) {
     deleted: false,
   };
   return NextResponse.json({ message: dto }, { status: 201 });
-}
+}, "chat.messages.create", "Unable to send your message right now.");

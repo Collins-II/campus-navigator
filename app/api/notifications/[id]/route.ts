@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Notification from "@/lib/database/models/Notification";
 import type { NotificationResponse } from "@/lib/notifications";
 
@@ -76,14 +77,7 @@ export async function PATCH(
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error("Error updating notification:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to update notification",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.update", "Unable to update this notification right now.");
   }
 }
 
@@ -128,13 +122,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error deleting notification:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to delete notification",
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "notifications.delete", "Unable to delete this notification right now.");
   }
 }

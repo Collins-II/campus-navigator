@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/database';
+import { apiErrorResponse } from '@/lib/database/errors';
 import Room from '@/lib/database/models/Room';
 
 // GET: Fetch all rooms / locations with optional search and building filter
@@ -34,6 +35,6 @@ export async function GET(req: Request) {
       { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' } }
     );
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to load locations" }, { status: 500 });
+    return apiErrorResponse(error, "locations.get", "Unable to load campus locations right now.");
   }
 }

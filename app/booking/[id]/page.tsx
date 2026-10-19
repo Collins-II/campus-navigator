@@ -26,7 +26,9 @@ export default function BookingDetailPage() {
   const params = useParams<{ id: string }>();
   const { status } = useSession();
   const [booking, setBooking] = useState<BookingApiRecord | null>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading');
+  const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,14 +43,16 @@ export default function BookingDetailPage() {
       try {
         const response = await fetch('/api/bookings', { cache: 'no-store' });
         const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Unable to load booking details right now.');
         const found = (data.bookings ?? []).find((b: BookingApiRecord) => (b._id || b.id) === params.id);
         setBooking(found ?? null);
         setState(found ? 'ready' : 'missing');
-      } catch {
-        setState('missing');
+      } catch (error) {
+        setLoadError(error instanceof Error ? error.message : 'Unable to load booking details right now.');
+        setState('error');
       }
     })();
-  }, [status, params.id]);
+  }, [status, params.id, reloadKey]);
 
   const cancelBooking = async () => {
     if (!window.confirm('Cancel this booking?')) return;
@@ -76,22 +80,38 @@ export default function BookingDetailPage() {
   const bookingStatus = booking?.status || 'pending';
 
   return (
-    <main className="ui-page">
+    <main className="ui-page bg-slate-50">
       <div className="mx-auto max-w-2xl">
         <PageHeader eyebrow="Booking" title="Booking details" backHref="/bookings" />
 
         {state === 'loading' ? (
-          <div className="h-64 animate-pulse rounded-lg bg-gray-200/70" aria-busy="true" />
+          <div className="h-64 animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-slate-200" aria-busy="true" />
+        ) : state === 'error' ? (
+          <div role="alert" className="ui-card !rounded-2xl !border-amber-200 !bg-amber-50 !shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">Booking details unavailable</h2>
+            <p className="mt-2 text-sm text-amber-900">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError('');
+                setState('loading');
+                setReloadKey((key) => key + 1);
+              }}
+              className="ui-btn ui-btn-secondary mt-5"
+            >
+              Try again
+            </button>
+          </div>
         ) : state === 'missing' || !booking ? (
-          <div className="ui-card text-center">
+          <div className="ui-card !rounded-2xl !border-slate-200 !shadow-sm">
             <h2 className="text-xl font-bold">Booking not found</h2>
             <p className="mt-2 text-sm text-gray-600">It may have been removed, or you may need to log in.</p>
             <Link href="/bookings" className="ui-btn ui-btn-primary mt-5">Back to bookings</Link>
           </div>
         ) : (
-          <div className="ui-card space-y-5">
+          <div className="ui-card space-y-5 !rounded-2xl !border-slate-200 !p-4 !shadow-sm sm:!p-6">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-2xl font-extrabold tracking-tight">{booking.purpose || 'Campus booking'}</h2>
+              <h2 className="min-w-0 break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{booking.purpose || 'Campus booking'}</h2>
               <span className={statusBadgeClass(bookingStatus)}>{bookingStatus}</span>
             </div>
 
@@ -102,13 +122,13 @@ export default function BookingDetailPage() {
                 { icon: Clock3, label: 'Time', value: `${fmt(booking.startTime, { timeStyle: 'short' })} – ${fmt(booking.endTime, { timeStyle: 'short' })}` },
                 { icon: Users, label: 'Attendees', value: String(booking.attendees || 1) },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="ui-card-muted flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+                <div key={label} className="ui-card-muted flex min-w-0 items-center gap-3 !rounded-xl !bg-slate-50">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 shadow-sm">
                     <Icon className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
-                    <dt className="text-xs font-semibold text-gray-500">{label}</dt>
-                    <dd className="truncate text-sm font-semibold">{value}</dd>
+                    <dt className="text-xs font-medium text-slate-500">{label}</dt>
+                    <dd className="break-words text-sm font-semibold text-slate-900">{value}</dd>
                   </div>
                 </div>
               ))}

@@ -4,10 +4,12 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Loader2, MessageSquarePlus, Search, Send, Users, X } from "lucide-react";
+import { ArrowLeft, BookOpen, LayoutGrid, Loader2, MessageSquare, MessageSquarePlus, Search, Send, X } from "lucide-react";
 
 import type { ChatConversation, ChatMessage } from "@/lib/chat";
 import { useChatUnread } from "@/lib/ChatUnreadContext";
+import { StudyCircle } from "@/components/chat/StudyCircle";
+import { CampusNavbar } from "@/components/ui/CampusNavbar";
 
 type Person = { id: string; name: string; program?: string; year?: string };
 type PendingMessage = ChatMessage & { pending?: boolean; failed?: boolean };
@@ -26,8 +28,8 @@ function shortTime(iso: string) {
 
 function Avatar({ name, group }: { name: string; group?: boolean }) {
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[#052e16] bg-[#008236] text-sm font-black text-white">
-      {group ? <Users className="h-5 w-5" /> : initials(name)}
+    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${group ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+      {group ? <BookOpen className="h-5 w-5" /> : initials(name)}
     </span>
   );
 }
@@ -46,9 +48,13 @@ function NewChatModal({ userId, onClose, onCreated }: { userId?: string; onClose
       const term = query.trim();
       try {
         const res = await fetch(`/api/chat/users?q=${encodeURIComponent(term)}`);
-        if (res.ok) setResults((await res.json()).users ?? []);
-      } catch {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Unable to search students right now.");
+        setError("");
+        setResults(data.users ?? []);
+      } catch (searchError) {
         setResults([]);
+        setError(searchError instanceof Error ? searchError.message : "Unable to search students right now.");
       }
     }, 150);
     return () => clearTimeout(handle);
@@ -82,18 +88,20 @@ function NewChatModal({ userId, onClose, onCreated }: { userId?: string; onClose
     <div className="ui-modal-backdrop" onClick={onClose}>
       <div className="ui-modal" role="dialog" aria-modal="true" aria-label="New chat" onClick={(e) => e.stopPropagation()}>
         <div className="ui-modal-head">
-          <h2 className="text-lg font-black uppercase tracking-wide">New chat</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Find your people</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="space-y-3 p-4">
+          <p className="text-sm leading-relaxed text-slate-500">Choose one student for a direct message, or two or more to start a Study Circle with meetups, polls and shared resources.</p>
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-gray-500" />
             <input
               autoFocus
               className="ui-input ui-input-icon"
               placeholder="Type a name or programme"
+              aria-label="Find students"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -143,7 +151,8 @@ function NewChatModal({ userId, onClose, onCreated }: { userId?: string; onClose
           {isGroup && (
             <input
               className="ui-input"
-              placeholder="Group name"
+              placeholder="Name your study circle"
+              aria-label="Study circle name"
               maxLength={60}
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -161,7 +170,7 @@ function NewChatModal({ userId, onClose, onCreated }: { userId?: string; onClose
             disabled={busy || selected.length === 0 || (isGroup && !name.trim())}
             onClick={create}
           >
-            {busy ? "Starting…" : isGroup ? "Create group" : "Start chat"}
+            {busy ? "Starting…" : isGroup ? "Create study circle" : "Start chat"}
           </button>
         </div>
       </div>
@@ -179,6 +188,7 @@ function Thread({ conversation, userId, onBack, onActivity }: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
+  const [tab, setTab] = useState<"messages" | "circle">("messages");
   const endRef = useRef<HTMLDivElement>(null);
   const nameById = useMemo(() => new Map(conversation.members.map((m) => [m.id, m.name])), [conversation.members]);
   const convId = conversation.id;
@@ -192,8 +202,8 @@ function Thread({ conversation, userId, onBack, onActivity }: {
     let cancelled = false;
     fetch(`/api/chat/conversations/${convId}/messages`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("Could not load messages");
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Unable to load messages right now.");
         if (!cancelled) setMessages(data.messages);
       })
       .catch((e) => !cancelled && setError(e.message))
@@ -270,20 +280,30 @@ function Thread({ conversation, userId, onBack, onActivity }: {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
-      <header className="flex items-center gap-3 border-b-[3px] border-[#008236] bg-[#052e16] px-3 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] text-white">
+      <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-3 py-3 text-slate-900">
         <button type="button" onClick={onBack} aria-label="Back to chats" className="flex h-11 w-11 items-center justify-center xl:hidden">
           <ArrowLeft className="h-6 w-6" />
         </button>
         <Avatar name={conversation.title} group={isGroup} />
         <div className="min-w-0">
-          <h2 className="truncate text-base font-black uppercase tracking-wide">{conversation.title}</h2>
-          <p className="truncate text-xs text-green-200">
-            {isGroup ? `${conversation.members.length} members` : conversation.members.find((m) => m.id !== userId)?.program || "Student"}
+          <h2 className="truncate text-base font-semibold tracking-tight">{conversation.title}</h2>
+          <p className="truncate text-xs text-slate-500">
+            {isGroup ? `Study circle · ${conversation.members.length} members` : conversation.members.find((m) => m.id !== userId)?.program || "Student"}
           </p>
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-green-50/50 px-3 py-4">
+      {isGroup && (
+        <nav className="flex shrink-0 gap-1 border-b border-slate-200 bg-white px-3 py-2" aria-label="Study circle views">
+          <button type="button" aria-pressed={tab === "messages"} onClick={() => setTab("messages")} className={`flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold ${tab === "messages" ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}><MessageSquare className="h-4 w-4" /> Conversation</button>
+          <button type="button" aria-pressed={tab === "circle"} onClick={() => setTab("circle")} className={`flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold ${tab === "circle" ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}><LayoutGrid className="h-4 w-4" /> Circle board</button>
+        </nav>
+      )}
+      {isGroup && tab === "circle" ? (
+        <StudyCircle conversationId={convId} userId={userId} ownerId={conversation.createdBy} memberNames={nameById} />
+      ) : (
+      <>
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-slate-50 px-3 py-4 sm:px-5">
         {loading && (
           <div className="flex justify-center py-10 text-[#008236]">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -323,7 +343,7 @@ function Thread({ conversation, userId, onBack, onActivity }: {
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={submit} className="flex items-end gap-2 border-t border-gray-200 bg-white mb-20 md:mb-0 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <form onSubmit={submit} className="flex items-end gap-2 border-t border-slate-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <textarea
           rows={1}
           value={text}
@@ -335,7 +355,7 @@ function Thread({ conversation, userId, onBack, onActivity }: {
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Message"
+          placeholder={isGroup ? "Ask a question, share an idea..." : "Write a message..."}
           aria-label="Message"
           className="ui-input max-h-32 min-h-[44px] flex-1 resize-none rounded-3xl"
         />
@@ -348,6 +368,8 @@ function Thread({ conversation, userId, onBack, onActivity }: {
           <Send className="h-5 w-5" />
         </button>
       </form>
+      </>
+      )}
     </div>
   );
 }
@@ -364,13 +386,15 @@ function ChatApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("");
+  const [inboxFilter, setInboxFilter] = useState<"all" | "group" | "direct">("all");
   const [showNew, setShowNew] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/chat/conversations");
-      if (!res.ok) throw new Error("Could not load chats");
-      setConversations((await res.json()).conversations);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not load chats");
+      setConversations(data.conversations);
       void refreshGlobalUnread();
       setError("");
     } catch (e) {
@@ -396,27 +420,33 @@ function ChatApp() {
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const open = (id: string | null) => router.push(id ? `/chat?c=${id}` : "/chat");
-  const visible = conversations.filter((c) => c.title.toLowerCase().includes(filter.toLowerCase()));
+  const visible = conversations.filter((c) =>
+    c.title.toLowerCase().includes(filter.toLowerCase()) && (inboxFilter === "all" || c.type === inboxFilter)
+  );
 
   // Opening a thread zeroes its unread badge locally; the server marks it read on fetch.
   const withRead = (c: ChatConversation) => (c.id === activeId ? { ...c, unread: 0 } : c);
 
   return (
-    <div className="fixed inset-0 bottom-[calc(64px+env(safe-area-inset-bottom))] flex bg-white xl:static xl:h-[calc(100vh-72px)]">
-      <aside className={`${active ? "hidden" : "flex"} w-full flex-col border-r-2 border-[#052e16] xl:flex xl:w-[380px] xl:shrink-0`}>
-        <header className="bg-[#052e16] px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] text-white">
+    <div className="fixed inset-0 bottom-[calc(68px+env(safe-area-inset-bottom))] flex flex-col bg-white xl:static xl:h-dvh">
+      <div className="relative z-20 shrink-0 border-b border-slate-100 bg-slate-50 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:px-6">
+        <CampusNavbar />
+      </div>
+      <div className="flex min-h-0 flex-1">
+      <aside className={`${active ? "hidden" : "flex"} min-h-0 w-full flex-col border-r border-slate-200 xl:flex xl:w-[360px] xl:shrink-0`}>
+        <header className="border-b border-slate-100 bg-slate-50 px-4 py-4 text-slate-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Link href="/dashboard" aria-label="Back to dashboard" className="-ml-2 flex h-11 w-11 items-center justify-center">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <h1 className="text-2xl font-black uppercase tracking-wide">Chats</h1>
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Your campus, connected</p><h1 className="text-2xl font-bold tracking-tight">Study & connect</h1></div>
             </div>
             <button
               type="button"
               onClick={() => setShowNew(true)}
               aria-label="New chat"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#008236]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-700"
             >
               <MessageSquarePlus className="h-5 w-5" />
             </button>
@@ -424,7 +454,7 @@ function ChatApp() {
           <div className="relative mt-3">
             <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-gray-500" />
             <input
-              className="ui-input ui-input-icon"
+              className="ui-input ui-input-icon !rounded-xl !border-0 !text-slate-900"
               placeholder="Search chats"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -432,6 +462,13 @@ function ChatApp() {
           </div>
         </header>
 
+        <nav className="flex shrink-0 gap-1 border-b border-slate-100 p-3" aria-label="Filter conversations">
+          {(["all", "group", "direct"] as const).map((value) => (
+            <button key={value} type="button" onClick={() => setInboxFilter(value)} aria-pressed={inboxFilter === value} className={`min-h-11 flex-1 rounded-xl px-2 text-xs font-semibold ${inboxFilter === value ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}>
+              {value === "all" ? "All" : value === "group" ? "Study circles" : "Direct"}
+            </button>
+          ))}
+        </nav>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {loading && (
             <div className="flex justify-center py-12 text-[#008236]">
@@ -441,8 +478,8 @@ function ChatApp() {
           {error && <p className="p-6 text-center text-sm font-semibold text-red-600">{error}</p>}
           {!loading && !error && conversations.length === 0 && (
             <div className="p-8 text-center">
-              <p className="text-lg font-black uppercase">No chats yet</p>
-              <p className="mt-1 text-sm text-gray-500">Start a conversation with a coursemate or create a study group.</p>
+              <p className="text-lg font-semibold text-slate-900">Better together</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">Message a coursemate or bring your study circle together. Turn questions into plans, and plans into progress.</p>
               <button type="button" className="ui-btn ui-btn-primary mt-4" onClick={() => setShowNew(true)}>
                 New chat
               </button>
@@ -454,12 +491,12 @@ function ChatApp() {
                 <button
                   type="button"
                   onClick={() => open(c.id)}
-                  className={`flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left ${c.id === activeId ? "bg-green-50" : "hover:bg-gray-50"}`}
+                  className={`flex min-h-[80px] w-full items-center gap-3 px-4 py-3 text-left ${c.id === activeId ? "bg-emerald-50" : "hover:bg-slate-50"}`}
                 >
                   <Avatar name={c.title} group={c.type === "group"} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-black">{c.title}</span>
+                      <span className="truncate text-sm font-semibold text-slate-900">{c.title}</span>
                       <span className="shrink-0 text-[11px] text-gray-500">{shortTime(c.lastMessage?.createdAt ?? c.updatedAt)}</span>
                     </span>
                     <span className="flex items-center justify-between gap-2">
@@ -477,21 +514,25 @@ function ChatApp() {
               </li>
             ))}
           </ul>
+          {!loading && !error && conversations.length > 0 && visible.length === 0 && <p className="p-6 text-center text-sm text-slate-500">No conversations match this view.</p>}
         </div>
       </aside>
 
-      <section className={`${active ? "fixed inset-0 z-[1200] xl:static" : "hidden"} min-w-0 flex-1 xl:block`}>
+      <section className={`${active ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col xl:flex`}>
         {active && userId ? (
           <Thread key={active.id} conversation={active} userId={userId} onBack={() => open(null)} onActivity={load} />
         ) : (
-          <div className="hidden h-full items-center justify-center text-center xl:flex">
-            <div>
-              <MessageSquarePlus className="mx-auto h-10 w-10 text-[#008236]" />
-              <p className="mt-2 text-sm font-bold uppercase tracking-wide text-gray-500">Select a chat to start messaging</p>
+          <div className="hidden h-full items-center justify-center bg-slate-50 p-8 text-center xl:flex">
+            <div className="max-w-md">
+              <BookOpen className="mx-auto h-12 w-12 text-emerald-700" />
+              <p className="mt-5 text-3xl font-bold tracking-tight text-slate-900">A little less solo.</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">Your next study session, a shared set of notes, a question finally answered. Start with your people.</p>
+              <button type="button" onClick={() => setShowNew(true)} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800"><MessageSquarePlus className="h-4 w-4" /> Start a conversation</button>
             </div>
           </div>
         )}
       </section>
+      </div>
 
       {showNew && (
         <NewChatModal

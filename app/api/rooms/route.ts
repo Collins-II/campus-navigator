@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 
@@ -70,9 +71,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ rooms: filteredRooms });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to load available rooms." },
-      { status: 500 }
-    );
+    return apiErrorResponse(error, "rooms.get", "Unable to load available rooms right now.");
   }
 }

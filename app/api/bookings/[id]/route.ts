@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
+import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 
@@ -75,7 +76,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     await booking.save();
     return NextResponse.json({ message: "Booking updated successfully.", booking });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update booking." }, { status: 500 });
+    return apiErrorResponse(error, "bookings.update", "Unable to update this booking right now.");
   }
 }
 
@@ -97,6 +98,6 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
 
     return NextResponse.json({ message: "Booking cancelled successfully." });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to delete booking." }, { status: 500 });
+    return apiErrorResponse(error, "bookings.delete", "Unable to cancel this booking right now.");
   }
 }
