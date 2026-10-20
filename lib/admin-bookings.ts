@@ -50,6 +50,13 @@ export async function requestAdminBookings(
     throw new BookingPolicyError("Central admin returned an invalid booking response.", 502);
   }
   if (!response.ok) {
+    if (method === "GET" && response.status === 404) {
+      if (result?.code === "STUDENT_NOT_FOUND") {
+        throw new BookingPolicyError("Your student account is not active in central administration. Contact Student Services to have it registered or activated.", 404);
+      }
+      console.error("Central bookings endpoint returned an unexpected 404.", { origin: url.origin });
+      throw new BookingPolicyError("Central booking approval is temporarily unavailable. Please retry.", 502);
+    }
     throw new BookingPolicyError(typeof result?.error === "string" ? result.error : "Central admin could not process this request.", response.status);
   }
   if (method === "GET" ? !Array.isArray(result?.bookings) : !result?.booking?._id) {

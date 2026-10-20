@@ -67,7 +67,7 @@ function BookingsContent() {
               <h2 className="mt-4 max-w-md text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">Great things start with a shared space.</h2>
               <p className="mt-3 max-w-lg text-sm leading-relaxed text-emerald-100">Plan a tutorial or host an event. Choose your lecture room, send a request, and track campus approval in one place.</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="hidden sm:grid gap-3 sm:grid-cols-2">
               {[{ icon: GraduationCap, title: "Tutorial Group", timing: "48+ hours ahead", text: "Give your group time to prepare." }, { icon: PartyPopper, title: "Campus event", timing: "7-14 days ahead", text: "Plan within the event booking window." }].map(({ icon: Icon, title, timing, text }) => <div key={title} className="rounded-2xl border border-white/15 bg-white/10 p-4">
                 <Icon className="mb-4 h-6 w-6 text-emerald-200" />
                 <p className="text-sm font-semibold">{title}</p><p className="mt-1 text-lg font-semibold tracking-tight">{timing}</p><p className="mt-2 text-xs leading-relaxed text-emerald-100">{text}</p>
