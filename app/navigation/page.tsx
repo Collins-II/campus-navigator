@@ -55,6 +55,7 @@ type NavigationBooking = {
   room?: string | { name?: string };
   purpose?: string;
   startTime?: string | Date;
+  startsAt?: string;
 };
 
 export default function NavigationPage() {
@@ -472,8 +473,8 @@ function NavigationContent() {
                     <div className="font-medium text-gray-900 truncate">{bookingMatch.purpose || 'Campus booking'}</div>
                     <div className="truncate">{bookingRoomLabel}</div>
                     <div className="text-gray-600 text-[11px] sm:text-xs">
-                      {bookingMatch.startTime
-                        ? new Date(bookingMatch.startTime).toLocaleString([], {
+                      {bookingMatch.startsAt
+                        ? new Date(bookingMatch.startsAt).toLocaleString([], {
                             month: 'short',
                             day: 'numeric',
                             hour: 'numeric',

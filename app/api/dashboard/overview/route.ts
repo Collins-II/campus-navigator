@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
-import { apiErrorResponse } from "@/lib/database/errors";
-import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 import User from "@/lib/database/models/User";
+import { LECTURE_ROOM_FILTER } from "@/lib/booking-policy";
+import { requestAdminBookings } from "@/lib/admin-bookings";
+import { bookingErrorResponse } from "@/lib/bookings";
 
 type BookingDoc = {
   _id?: string | { toString: () => string };
@@ -16,6 +17,11 @@ type BookingDoc = {
   startTime?: string | Date;
   endTime?: string | Date;
   createdAt?: string | Date;
+  title?: string;
+  attendees?: number;
+  conversation?: { toString(): string } | null;
+  tutorialGroup?: { groupName: string; courseCode: string; topic: string; leaderName: string };
+  cancellationReason?: string;
 };
 
 const getLocalDateKey = (date: Date) => {
@@ -35,8 +41,8 @@ export async function GET() {
 
     const [profile, bookings, totalRooms] = await Promise.all([
       User.findById(session.user.id).lean(),
-      Booking.find({ user: session.user.id }).populate("room", "name code floor capacity").sort({ startTime: 1 }).lean(),
-      Room.countDocuments(),
+      requestAdminBookings(session.user.studentId, "GET").then((result) => result.bookings),
+      Room.countDocuments(LECTURE_ROOM_FILTER),
     ]);
 
     const mappedBookings = bookings.map((booking: BookingDoc) => {
@@ -44,13 +50,20 @@ export async function GET() {
       return {
         id: String(booking._id ?? "booking-id"),
         purpose: booking.purpose || "Campus booking",
+        title: booking.title,
+        tutorialGroup: booking.tutorialGroup,
+        cancellationReason: booking.cancellationReason,
+        attendees: booking.attendees ?? 1,
+        conversationId: booking.conversation ? String(booking.conversation) : null,
+        startsAt: startTime.toISOString(),
+        endsAt: booking.endTime ? new Date(booking.endTime).toISOString() : null,
         room: typeof booking.room === "object" && booking.room ? booking.room.name : "Unknown room",
         roomCode: typeof booking.room === "object" && booking.room ? booking.room.code : "L1",
         floor: typeof booking.room === "object" && booking.room ? booking.room.floor : "Ground Floor",
         status: booking.status || "pending",
         date: getLocalDateKey(startTime),
-        startTime: startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        endTime: booking.endTime ? new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "10:30",
+        startTime: startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
+        endTime: booking.endTime ? new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : "",
         createdAt: booking.createdAt ? new Date(booking.createdAt).toISOString() : new Date().toISOString(),
       };
     });
@@ -86,6 +99,6 @@ export async function GET() {
       bookings: mappedBookings,
     });
   } catch (error) {
-    return apiErrorResponse(error, "dashboard.overview", "Unable to load your dashboard right now.");
+    return bookingErrorResponse(error, "dashboard.overview", "Unable to load your dashboard right now.");
   }
 }

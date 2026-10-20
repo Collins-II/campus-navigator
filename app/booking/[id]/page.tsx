@@ -17,6 +17,13 @@ type BookingApiRecord = {
   endTime?: string;
   status?: string;
   attendees?: number;
+  title?: string;
+  tutorialGroup?: { groupName: string; courseCode: string; topic: string; leaderName: string };
+  cancellationReason?: string;
+  startsAt?: string;
+  endsAt?: string;
+  roomCode?: string;
+  conversationId?: string | null;
 };
 
 const fmt = (value?: string, options?: Intl.DateTimeFormatOptions) =>
@@ -76,7 +83,7 @@ export default function BookingDetailPage() {
 
   const room = typeof booking?.room === 'object' ? booking.room : { name: booking?.room };
   const roomName = room?.name || 'Campus room';
-  const roomCode = room && 'code' in room ? room.code : undefined;
+  const roomCode = booking?.roomCode || (room && 'code' in room ? room.code : undefined);
   const bookingStatus = booking?.status || 'pending';
 
   return (
@@ -111,15 +118,15 @@ export default function BookingDetailPage() {
         ) : (
           <div className="ui-card space-y-5 !rounded-2xl !border-slate-200 !p-4 !shadow-sm sm:!p-6">
             <div className="flex items-start justify-between gap-3">
-              <h2 className="min-w-0 break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{booking.purpose || 'Campus booking'}</h2>
+              <div><h2 className="min-w-0 break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{booking.title || booking.purpose || 'Campus booking'}</h2><p className="mt-2 text-sm text-emerald-700">{booking.purpose}{booking.conversationId ? ' / Study Circle' : ''}</p></div>
               <span className={statusBadgeClass(bookingStatus)}>{bookingStatus}</span>
             </div>
 
             <dl className="grid gap-3 sm:grid-cols-2">
               {[
                 { icon: MapPin, label: 'Room', value: roomCode ? `${roomName} (${roomCode})` : roomName },
-                { icon: CalendarDays, label: 'Date', value: fmt(booking.startTime, { dateStyle: 'full' }) },
-                { icon: Clock3, label: 'Time', value: `${fmt(booking.startTime, { timeStyle: 'short' })} – ${fmt(booking.endTime, { timeStyle: 'short' })}` },
+                { icon: CalendarDays, label: 'Date', value: fmt(booking.startsAt, { dateStyle: 'full' }) },
+                { icon: Clock3, label: 'Time', value: `${fmt(booking.startsAt, { timeStyle: 'short' })} – ${fmt(booking.endsAt, { timeStyle: 'short' })}` },
                 { icon: Users, label: 'Attendees', value: String(booking.attendees || 1) },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="ui-card-muted flex min-w-0 items-center gap-3 !rounded-xl !bg-slate-50">
@@ -133,6 +140,13 @@ export default function BookingDetailPage() {
                 </div>
               ))}
             </dl>
+            {booking.tutorialGroup && <section className="rounded-xl bg-slate-50 p-4 text-sm">
+              <h3 className="font-semibold">Tutorial Group details</h3>
+              <p className="mt-2">{booking.tutorialGroup.groupName} / {booking.tutorialGroup.courseCode}</p>
+              <p className="mt-1">Tutor / leader: {booking.tutorialGroup.leaderName}</p>
+              <p className="mt-2 whitespace-pre-wrap">{booking.tutorialGroup.topic}</p>
+            </section>}
+            {booking.cancellationReason === 'timetable_conflict' && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">This booking was cancelled because a published class takes priority.</p>}
 
             {error ? <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
 

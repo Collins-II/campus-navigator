@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowUpRight, BookOpen, CalendarDays, Check, CheckCheck, Download, ExternalLink, FileText, ListChecks, Loader2, MapPin, Plus, Trash2, Upload, Users, X } from "lucide-react";
 import { CIRCLE_DOCUMENT_ACCEPT, validateCircleDocument, validateCircleDraft, type CircleActivity, type CircleKind } from "@/lib/study-circles";
+import { MIN_CIRCLE_BOOKING_MEMBERS } from "@/lib/booking-policy";
 
 type ActivityPage = { activities: CircleActivity[]; nextCursor: string | null };
 type Props = { conversationId: string; userId: string; ownerId?: string; memberNames: Map<string, string> };
@@ -128,6 +129,7 @@ export function StudyCircle({ conversationId, userId, ownerId, memberNames }: Pr
   };
 
   const visible = activities.filter((activity) => filter === "all" || activity.kind === filter);
+  const canBookRoom = memberNames.size >= MIN_CIRCLE_BOOKING_MEMBERS;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-3 sm:p-5">
       <div className="mx-auto max-w-3xl space-y-4">
@@ -145,6 +147,14 @@ export function StudyCircle({ conversationId, userId, ownerId, memberNames }: Pr
               );
             })}
           </div>
+        </section>
+
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Users className="h-5 w-5" /></span>
+            <div><h4 className="text-sm font-semibold text-slate-900">A lecture room for your circle</h4><p className="mt-1 text-xs leading-relaxed text-slate-500">{memberNames.size} members / {canBookRoom ? "Eligible for Tutorial Group bookings. Plan at least 48 hours ahead." : `At least ${MIN_CIRCLE_BOOKING_MEMBERS} members are required to reserve a lecture room.`}</p></div>
+          </div>
+          {canBookRoom ? <Link href={`/bookings?circle=${encodeURIComponent(conversationId)}`} className={`${actionClass} bg-emerald-700 text-white hover:bg-emerald-800`}><CalendarDays className="h-4 w-4" /> Request lecture room</Link> : <button type="button" disabled className={`${actionClass} bg-slate-100 text-slate-400`}>50 members required</button>}
         </section>
 
         {creating && (

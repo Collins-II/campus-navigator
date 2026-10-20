@@ -65,8 +65,16 @@ export function RoomAvailabilityStatus({
       setMessage('Checking room status...');
 
       try {
+        const start = new Date(`${date}T${startTime}:00`);
+        const end = new Date(`${date}T${endTime}:00`);
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
+          throw new Error('Choose a valid time range to check room availability.');
+        }
+        const params = new URLSearchParams({
+          room: roomName, startsAt: start.toISOString(), endsAt: end.toISOString(),
+        });
         const response = await fetch(
-          `/api/rooms?room=${encodeURIComponent(roomName)}&date=${date}&start=${startTime}&end=${endTime}`,
+          `/api/rooms?${params}`,
           { signal: controller.signal }
         );
 
@@ -92,6 +100,7 @@ export function RoomAvailabilityStatus({
         setStatus('available');
         setMessage(`The room "${roomName}" is available for the selected time.`);
       } catch {
+        if (controller.signal.aborted) return;
         setStatus('unknown');
         setMessage('Room status could not be verified right now.');
       }

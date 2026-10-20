@@ -30,7 +30,6 @@ const roomSchema = new Schema<IRoom>(
     spaceType: {
       type: String,
       enum: ["lecture_room", "laboratory", "seminar_room", "office", "library", "clinic", "cafeteria", "residence", "administrative", "other"],
-      default: "lecture_room",
       index: true,
     },
     location: {

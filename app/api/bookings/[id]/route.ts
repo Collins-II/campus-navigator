@@ -3,9 +3,11 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
-import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
+import mongoose from "mongoose";
+import { bookingBody, bookingErrorResponse, BookingPolicyError, parseBookingInput, validateBookingResources } from "@/lib/bookings";
+import { requestAdminBookings } from "@/lib/admin-bookings";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -16,67 +18,58 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
-    const body = await request.json();
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      throw new BookingPolicyError("Booking not found.", 404);
+    }
+    const body = bookingBody(await request.json());
     await connectToDatabase();
 
-    const booking = await Booking.findOne({ _id: id, user: session.user.id });
+    const booking = await Booking.findOne({ _id: id, user: session.user.id }).lean();
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found." }, { status: 404 });
     }
 
-    const nextRoom = body.room ? await Room.findOne({ $or: [{ name: body.room }, { code: body.room }] }) : null;
-    const nextStart = body.startTime ? new Date(body.startTime) : booking.startTime;
-    const nextEnd = body.endTime ? new Date(body.endTime) : booking.endTime;
-
-    if (nextRoom && nextRoom._id.toString() !== booking.room.toString()) {
-      const hasConflict = await Booking.findOne({
-        room: nextRoom._id,
-        status: { $ne: "cancelled" },
-        _id: { $ne: booking._id },
-        startTime: { $lt: nextEnd },
-        endTime: { $gt: nextStart },
-      });
-
-      if (hasConflict) {
-        return NextResponse.json({ error: `The room "${nextRoom.name}" is unavailable for the selected time slot.` }, { status: 409 });
+    if (body.status === "cancelled") {
+      if (Object.keys(body).some((key) => key !== "status")) {
+        throw new BookingPolicyError("Cancel a booking separately from other changes.");
       }
+      await requestAdminBookings(session.user.studentId, "PATCH", {}, id);
+      return NextResponse.json({ message: "Booking cancelled successfully." });
+    }
+    if (body.status !== undefined && body.status !== booking.status) {
+      throw new BookingPolicyError("Only campus staff can confirm bookings.", 403);
+    }
+    if (booking.status === "cancelled") {
+      throw new BookingPolicyError("Cancelled bookings cannot be edited. Create a new request.", 409);
+    }
+    if (booking.conversation && body.conversationId !== undefined &&
+        body.conversationId !== String(booking.conversation)) {
+      throw new BookingPolicyError("The Study Circle attached to a booking cannot be changed.");
     }
 
-    if (nextRoom) {
-      booking.room = nextRoom._id;
-    }
-
-    if (typeof body.purpose === "string" && body.purpose.trim()) {
-      booking.purpose = body.purpose.trim();
-    }
-
-    if (body.startTime) {
-      booking.startTime = nextStart;
-    }
-
-    if (body.endTime) {
-      booking.endTime = nextEnd;
-    }
-
-    if (nextEnd <= nextStart) {
-      return NextResponse.json({ error: "End time must be later than start time." }, { status: 400 });
-    }
-
-    if (body.status) {
-      // Staff confirm bookings in the campus admin app; students can only cancel.
-      if (body.status !== "cancelled" && body.status !== booking.status) {
-        return NextResponse.json({ error: "You can only cancel your own bookings." }, { status: 403 });
-      }
-      if (body.status === "cancelled") {
-        booking.status = "cancelled";
-      }
-    }
-
-    await booking.save();
-    return NextResponse.json({ message: "Booking updated successfully.", booking });
+    const currentRoom = await Room.findById(booking.room).lean();
+    const input = parseBookingInput({
+      purpose: booking.purpose,
+      title: booking.title,
+      tutorialGroup: booking.tutorialGroup,
+      room: currentRoom?.code,
+      startTime: booking.startTime.toISOString(),
+      endTime: booking.endTime.toISOString(),
+      attendees: booking.attendees ?? 1,
+      ...body,
+      conversationId: booking.conversation ? String(booking.conversation) : body.conversationId,
+    });
+    const { room, attendees } = await validateBookingResources(input, session.user.id, id);
+    const result = await requestAdminBookings(session.user.studentId, "PATCH", {
+      roomId: String(room._id), purpose: input.purpose, title: input.title, attendees,
+      ...(input.tutorialGroup ? { tutorialGroup: input.tutorialGroup } : {}),
+      conversationId: input.conversationId,
+      startTime: input.startTime.toISOString(), endTime: input.endTime.toISOString(),
+    }, id);
+    return NextResponse.json({ message: "Changes submitted for staff approval.", booking: result.booking });
   } catch (error) {
-    return apiErrorResponse(error, "bookings.update", "Unable to update this booking right now.");
+    return bookingErrorResponse(error, "bookings.update", "Unable to update this booking right now.");
   }
 }
 
@@ -89,15 +82,10 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
-    await connectToDatabase();
-    const deleted = await Booking.findOneAndDelete({ _id: id, user: session.user.id });
-
-    if (!deleted) {
-      return NextResponse.json({ error: "Booking not found." }, { status: 404 });
-    }
-
+    if (!mongoose.isObjectIdOrHexString(id)) throw new BookingPolicyError("Booking not found.", 404);
+    await requestAdminBookings(session.user.studentId, "PATCH", {}, id);
     return NextResponse.json({ message: "Booking cancelled successfully." });
   } catch (error) {
-    return apiErrorResponse(error, "bookings.delete", "Unable to cancel this booking right now.");
+    return bookingErrorResponse(error, "bookings.delete", "Unable to cancel this booking right now.");
   }
 }

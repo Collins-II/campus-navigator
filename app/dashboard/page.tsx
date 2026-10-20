@@ -31,6 +31,13 @@ type DashboardBooking = {
   startTime: string;
   endTime: string;
   createdAt: string;
+  title?: string;
+  tutorialGroup?: { groupName: string; courseCode: string; topic: string; leaderName: string };
+  cancellationReason?: string;
+  attendees?: number;
+  conversationId?: string | null;
+  startsAt?: string;
+  endsAt?: string | null;
 };
 
 type DashboardProfile = {
@@ -145,7 +152,16 @@ export default function DashboardPage() {
 
       setProfile(overviewData.profile || null);
       setSummary(overviewData.summary || { totalBookings: 0, activeBookings: 0, upcomingClasses: 0, roomUsage: 0 });
-      setBookings(Array.isArray(overviewData.bookings) ? overviewData.bookings : []);
+      setBookings(Array.isArray(overviewData.bookings) ? overviewData.bookings.map((booking: DashboardBooking) => {
+        const start = booking.startsAt ? new Date(booking.startsAt) : null;
+        const end = booking.endsAt ? new Date(booking.endsAt) : null;
+        return {
+          ...booking,
+          date: start ? getLocalDateKey(start) : booking.date,
+          startTime: start ? start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) : booking.startTime,
+          endTime: end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) : booking.endTime,
+        };
+      }) : []);
       setRooms(activeRooms);
       setPayment(paymentData.payment || null);
       setSettings(settingsData.settings || null);
@@ -348,11 +364,11 @@ export default function DashboardPage() {
           </aside>
 
           <section className="space-y-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                  <div className="text-3xl font-bold leading-none tabular-nums text-emerald-800 sm:text-4xl">{stat.value}</div>
-                  <div className="mt-2 text-xs font-medium text-slate-500">{stat.label}</div>
+                <div key={stat.label} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
+                  <div className="break-words text-2xl font-bold leading-none tabular-nums text-emerald-800 sm:text-4xl">{stat.value}</div>
+                  <div className="mt-1.5 text-[11px] font-medium leading-4 text-slate-500 sm:mt-2 sm:text-xs">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -468,7 +484,6 @@ export default function DashboardPage() {
           setBookingModalOpen(false);
           setSelectedBooking(null);
         }}
-        rooms={rooms}
         booking={selectedBooking}
         defaultRoomName={preferredRoom}
         onSaved={fetchDashboardData}

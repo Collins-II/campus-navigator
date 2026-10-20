@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import dns from "dns";
+import dns from "node:dns/promises";
 import { MongoConnectionError } from "@/lib/database/errors";
 
-// Prefer public DNS resolution for Atlas SRV lookups when the runtime network is restricted.
+// The MongoDB driver uses the promise resolver for Atlas SRV and TXT lookups.
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const MONGODB_URI = (

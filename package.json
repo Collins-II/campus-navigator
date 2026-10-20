@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:database": "node --experimental-test-module-mocks --experimental-transform-types --test lib/database/database.test.mjs",
+    "test:bookings": "node --experimental-test-module-mocks --experimental-transform-types --test lib/bookings.test.mjs",
     "test:timetable": "node --test lib/timetable-pdf.test.mjs",
     "test:circles": "node --experimental-test-module-mocks --experimental-transform-types --test lib/study-circles.test.mjs lib/study-circle-api.test.mjs",
     "lint": "eslint"

@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
-import { apiErrorResponse } from "@/lib/database/errors";
-import Booking from "@/lib/database/models/Booking";
-import Room from "@/lib/database/models/Room";
+import "@/lib/database/models/Room";
+import { bookingBody, bookingErrorResponse, parseBookingInput, validateBookingResources } from "@/lib/bookings";
+import { requestAdminBookings } from "@/lib/admin-bookings";
 
 type BookingApiRecord = {
   _id?: string | { toString: () => string };
@@ -15,6 +15,10 @@ type BookingApiRecord = {
   startTime?: string | Date;
   endTime?: string | Date;
   attendees?: number;
+  title?: string;
+  conversation?: { toString(): string } | null;
+  tutorialGroup?: { groupName: string; courseCode: string; topic: string; leaderName: string };
+  cancellationReason?: string;
 };
 
 const getLocalDateKey = (date: Date) => {
@@ -29,8 +33,7 @@ export async function GET() {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
-    await connectToDatabase();
-    const bookings = await Booking.find({ user: session.user.id }).populate("room", "name code").sort({ startTime: 1 }).lean();
+    const { bookings } = await requestAdminBookings(session.user.studentId, "GET");
 
     return NextResponse.json({
       bookings: bookings.map((booking: BookingApiRecord) => {
@@ -38,17 +41,24 @@ export async function GET() {
         return {
           id: String(booking._id ?? "booking-id"),
           purpose: booking.purpose,
+          title: booking.title,
+          tutorialGroup: booking.tutorialGroup,
+          cancellationReason: booking.cancellationReason,
+          attendees: booking.attendees ?? 1,
+          conversationId: booking.conversation ? String(booking.conversation) : null,
           room: typeof booking.room === "object" && booking.room ? booking.room.name || "Unknown room" : booking.room || "Unknown room",
           roomCode: typeof booking.room === "object" && booking.room ? booking.room.code || "L1" : "L1",
           status: booking.status,
+          startsAt: start.toISOString(),
+          endsAt: booking.endTime ? new Date(booking.endTime).toISOString() : null,
           date: getLocalDateKey(start),
-          startTime: start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          endTime: booking.endTime ? new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "10:30",
+          startTime: start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
+          endTime: booking.endTime ? new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : "",
         };
       }),
-    }, { status: 200 });
+    }, { status: 200, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return apiErrorResponse(error, "bookings.get", "Unable to load your bookings right now.");
+    return bookingErrorResponse(error, "bookings.get", "Unable to load your bookings right now.");
   }
 }
 
@@ -59,46 +69,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
-    const body = await request.json();
-    const purpose = typeof body.purpose === "string" ? body.purpose.trim() : "Campus coordination";
-    const roomName = typeof body.room === "string" ? body.room.trim() : "";
-    const startTime = body.startTime ? new Date(body.startTime) : new Date();
-    const endTime = body.endTime ? new Date(body.endTime) : new Date(Date.now() + 60 * 60 * 1000);
-    const status = "pending";
-
-    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
-      return NextResponse.json({ error: "A valid start and end time is required." }, { status: 400 });
-    }
-
-    if (endTime <= startTime) {
-      return NextResponse.json({ error: "End time must be later than start time." }, { status: 400 });
-    }
+    const input = parseBookingInput(bookingBody(await request.json()));
 
     await connectToDatabase();
-    const roomDoc = await Room.findOne({ $or: [{ name: roomName }, { code: roomName }] });
+    const { room: roomDoc, attendees } = await validateBookingResources(input, session.user.id);
 
-    if (!roomDoc) {
-      return NextResponse.json({ error: "Selected lecture room was not found. Please create it first from the admin room modal." }, { status: 404 });
-    }
-
-    const hasConflict = await Booking.findOne({
-      room: roomDoc._id,
-      status: { $ne: "cancelled" },
-      startTime: { $lt: endTime },
-      endTime: { $gt: startTime },
-    });
-
-    if (hasConflict) {
-      return NextResponse.json({ error: `The room "${roomDoc.name}" is unavailable for the selected time slot.` }, { status: 409 });
-    }
-
-    const booking = await Booking.create({
-      user: session.user.id,
-      room: roomDoc._id,
-      purpose,
-      startTime,
-      endTime,
-      status,
+    const { booking } = await requestAdminBookings(session.user.studentId, "POST", {
+      roomId: String(roomDoc._id),
+      purpose: input.purpose,
+      title: input.title,
+      ...(input.tutorialGroup ? { tutorialGroup: input.tutorialGroup } : {}),
+      attendees,
+      conversationId: input.conversationId,
+      startTime: input.startTime.toISOString(),
+      endTime: input.endTime.toISOString(),
     });
 
     return NextResponse.json({
@@ -112,6 +96,6 @@ export async function POST(request: Request) {
       },
     }, { status: 201 });
   } catch (error) {
-    return apiErrorResponse(error, "bookings.create", "Unable to create this booking right now.");
+    return bookingErrorResponse(error, "bookings.create", "Unable to create this booking right now.");
   }
 }
