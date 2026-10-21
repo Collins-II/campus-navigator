@@ -13,6 +13,8 @@ import { PaymentModal } from '@/components/dashboard/PaymentModal';
 import { ProfileModal } from '@/components/dashboard/ProfileModal';
 import { SettingsModal } from '@/components/dashboard/SettingsModal';
 import Loading from '../loading';
+import { BookingAccessNotice } from '@/components/bookings/BookingAccessNotice';
+import type { BookingAccess } from '@/lib/booking-policy';
 
 type DashboardSummary = {
   totalBookings: number;
@@ -96,6 +98,7 @@ export default function DashboardPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bookingAccess, setBookingAccess] = useState<BookingAccess | null>(null);
 
   const userName = profile?.name || session?.user?.name || 'Student';
   const userRole = profile?.role || session?.user?.role || 'student';
@@ -151,6 +154,7 @@ export default function DashboardPage() {
         : [];
 
       setProfile(overviewData.profile || null);
+      setBookingAccess(overviewData.bookingAccess ?? null);
       setSummary(overviewData.summary || { totalBookings: 0, activeBookings: 0, upcomingClasses: 0, roomUsage: 0 });
       setBookings(Array.isArray(overviewData.bookings) ? overviewData.bookings.map((booking: DashboardBooking) => {
         const start = booking.startsAt ? new Date(booking.startsAt) : null;
@@ -218,19 +222,19 @@ export default function DashboardPage() {
     <main className="ui-page min-h-screen bg-slate-50 text-slate-900 !p-0 md:!p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-5 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 px-4 pb-6 pt-[calc(1.25rem+env(safe-area-inset-top))] text-white shadow-lg shadow-emerald-950/10 sm:px-6 md:rounded-2xl md:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Campus navigator · Student</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Campus navigator · {userRole}</p>
           <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
             Hi, {String(userName).split(' ')[0]}
           </h1>
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <button
+            {bookingAccess?.allowed !== false && <button
               type="button"
               onClick={() => setBookingModalOpen(true)}
               className="ui-btn ui-btn-primary"
             >
               <Plus className="h-4 w-4" />
               New booking
-            </button>
+            </button>}
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
@@ -364,6 +368,7 @@ export default function DashboardPage() {
           </aside>
 
           <section className="space-y-6">
+            {bookingAccess?.allowed === false ? <div className="pb-24 xl:pb-0"><BookingAccessNotice access={bookingAccess} /></div> : <>
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {stats.map((stat) => (
                 <div key={stat.label} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
@@ -473,6 +478,7 @@ export default function DashboardPage() {
                 )}
               </div>
             </div>
+            </>}
           </section>
         </div>
         </div>

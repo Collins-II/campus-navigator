@@ -7,6 +7,8 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { ArrowUpRight, CalendarDays, ChevronRight, Clock3, GraduationCap, MapPin, PartyPopper, Users } from "lucide-react";
 import { PageHeader, statusBadgeClass } from "@/components/ui/PageHeader";
 import { BookingForm } from "@/components/bookings/BookingForm";
+import { BookingAccessNotice } from "@/components/bookings/BookingAccessNotice";
+import type { BookingAccess } from "@/lib/booking-policy";
 
 type BookingRecord = {
   id: string;
@@ -28,6 +30,7 @@ function BookingsContent() {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookingAccess, setBookingAccess] = useState<BookingAccess | null>(null);
   const [filter, setFilter] = useState<"upcoming" | "all">("upcoming");
   const [now, setNow] = useState(() => Date.now());
 
@@ -37,6 +40,11 @@ function BookingsContent() {
     try {
       const response = await fetch("/api/bookings", { cache: "no-store" });
       const data = await response.json();
+      setBookingAccess(data.bookingAccess ?? null);
+      if (!response.ok && data.bookingAccess?.allowed === false) {
+        setBookings([]);
+        return;
+      }
       if (!response.ok) throw new Error(data.error || "Unable to load your bookings.");
       setBookings(data.bookings);
       setNow(Date.now());
@@ -76,13 +84,13 @@ function BookingsContent() {
           </div>
         </section>
 
-        {status === "loading" ? <div aria-busy="true" className="h-80 animate-pulse rounded-3xl bg-white" /> : status !== "authenticated" ? (
+        {status === "loading" || (status === "authenticated" && loading && bookingAccess === null) ? <div aria-busy="true" className="h-80 animate-pulse rounded-3xl bg-white" /> : status !== "authenticated" ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center">
             <h2 className="text-xl font-semibold text-slate-900">Your next gathering starts here.</h2>
             <p className="mt-2 text-sm text-slate-500">Sign in with your student account to request a lecture room and manage your bookings.</p>
             <Link href="/login" className="ui-btn ui-btn-primary mt-5">Log in to book</Link>
           </div>
-        ) : <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        ) : bookingAccess?.allowed === false ? <BookingAccessNotice access={bookingAccess} /> : <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <div className="mb-6 border-b border-slate-100 pb-5"><p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Plan ahead</p><h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">Request a lecture room</h2><p className="mt-2 text-sm text-slate-500">Choose a purpose to see the right booking window.</p></div>
             <BookingForm key={circleId} defaultCircleId={circleId} onSaved={() => void loadBookings()} />

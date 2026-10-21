@@ -1,21 +1,38 @@
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import { isBookingPurpose, LECTURE_ROOM_FILTER, MIN_CIRCLE_BOOKING_MEMBERS, parseTutorialGroup, validateBookingSchedule } from "@/lib/booking-policy";
+import { isBookingPurpose, LECTURE_ROOM_FILTER, MIN_CIRCLE_BOOKING_MEMBERS, parseTutorialGroup, validateBookingSchedule, type BookingAccess } from "@/lib/booking-policy";
 import { apiErrorResponse } from "@/lib/database/errors";
 import Booking from "@/lib/database/models/Booking";
 import Conversation from "@/lib/database/models/Conversation";
 import Room from "@/lib/database/models/Room";
 
 export class BookingPolicyError extends Error {
-  constructor(message: string, readonly status = 400) {
+  constructor(message: string, readonly status = 400, readonly bookingAccess?: BookingAccess) {
     super(message);
     this.name = "BookingPolicyError";
   }
 }
 
+export function getBookingAccess(role: string | undefined): BookingAccess {
+  if (role === "student") return { allowed: true };
+  return {
+    allowed: false,
+    message: "Room bookings in this app are for student accounts only. You are signed in with a staff or admin account. Use Central Admin to manage room bookings, or sign in with a student account.",
+    adminUrl: process.env.ADMIN_APP_URL ? new URL("/admin", process.env.ADMIN_APP_URL).href : null,
+  };
+}
+
+export function requireStudentBookingAccess(role: string | undefined) {
+  const access = getBookingAccess(role);
+  if (!access.allowed) throw new BookingPolicyError(access.message, 403, access);
+}
+
 export function bookingErrorResponse(error: unknown, operation: string, message: string) {
   if (error instanceof BookingPolicyError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({
+      error: error.message,
+      ...(error.bookingAccess ? { bookingAccess: error.bookingAccess } : {}),
+    }, { status: error.status, headers: { "Cache-Control": "private, no-store" } });
   }
   return apiErrorResponse(error, operation, message);
 }

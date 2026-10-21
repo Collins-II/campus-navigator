@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/database";
 import "@/lib/database/models/Room";
-import { bookingBody, bookingErrorResponse, parseBookingInput, validateBookingResources } from "@/lib/bookings";
+import { bookingBody, bookingErrorResponse, parseBookingInput, requireStudentBookingAccess, validateBookingResources } from "@/lib/bookings";
 import { requestAdminBookings } from "@/lib/admin-bookings";
 
 type BookingApiRecord = {
@@ -33,6 +33,7 @@ export async function GET() {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    requireStudentBookingAccess(session.user.role);
     const { bookings } = await requestAdminBookings(session.user.studentId, "GET");
 
     return NextResponse.json({
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    requireStudentBookingAccess(session.user.role);
     const input = parseBookingInput(bookingBody(await request.json()));
 
     await connectToDatabase();

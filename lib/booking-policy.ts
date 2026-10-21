@@ -1,4 +1,8 @@
 export const BOOKING_PURPOSES = ["Tutorial Group", "Event"] as const;
+export type BookingAccess =
+  | { allowed: true }
+  | { allowed: false; message: string; adminUrl: string | null };
+
 export type BookingPurpose = (typeof BOOKING_PURPOSES)[number];
 export type TutorialGroupDetails = { groupName: string; courseCode: string; topic: string; leaderName: string };
 

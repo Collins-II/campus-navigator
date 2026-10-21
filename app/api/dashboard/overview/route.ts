@@ -7,7 +7,7 @@ import Room from "@/lib/database/models/Room";
 import User from "@/lib/database/models/User";
 import { LECTURE_ROOM_FILTER } from "@/lib/booking-policy";
 import { requestAdminBookings } from "@/lib/admin-bookings";
-import { bookingErrorResponse } from "@/lib/bookings";
+import { bookingErrorResponse, getBookingAccess } from "@/lib/bookings";
 
 type BookingDoc = {
   _id?: string | { toString: () => string };
@@ -39,10 +39,13 @@ export async function GET() {
 
     await connectToDatabase();
 
+    const bookingAccess = getBookingAccess(session.user.role);
     const [profile, bookings, totalRooms] = await Promise.all([
       User.findById(session.user.id).lean(),
-      requestAdminBookings(session.user.studentId, "GET").then((result) => result.bookings),
-      Room.countDocuments(LECTURE_ROOM_FILTER),
+      bookingAccess.allowed
+        ? requestAdminBookings(session.user.studentId, "GET").then((result) => result.bookings)
+        : Promise.resolve([]),
+      bookingAccess.allowed ? Room.countDocuments(LECTURE_ROOM_FILTER) : Promise.resolve(0),
     ]);
 
     const mappedBookings = bookings.map((booking: BookingDoc) => {
@@ -90,14 +93,15 @@ export async function GET() {
         year: profile?.year || "",
         role: profile?.role || session.user.role || "student",
       },
-      summary: {
+      bookingAccess,
+      summary: bookingAccess.allowed ? {
         totalBookings: mappedBookings.length,
         activeBookings,
         upcomingClasses,
         roomUsage,
-      },
+      } : null,
       bookings: mappedBookings,
-    });
+    }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return bookingErrorResponse(error, "dashboard.overview", "Unable to load your dashboard right now.");
   }

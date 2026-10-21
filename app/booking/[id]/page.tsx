@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, MapPin, Navigation, Users } from 'lucide-react';
 
 import { PageHeader, statusBadgeClass } from '@/components/ui/PageHeader';
+import { BookingAccessNotice } from '@/components/bookings/BookingAccessNotice';
+import type { BookingAccess } from '@/lib/booking-policy';
 
 type BookingApiRecord = {
   _id?: string;
@@ -38,6 +40,7 @@ export default function BookingDetailPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [bookingAccess, setBookingAccess] = useState<BookingAccess | null>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -50,6 +53,12 @@ export default function BookingDetailPage() {
       try {
         const response = await fetch('/api/bookings', { cache: 'no-store' });
         const data = await response.json();
+        setBookingAccess(data.bookingAccess ?? null);
+        if (!response.ok && data.bookingAccess?.allowed === false) {
+          setBooking(null);
+          setState('ready');
+          return;
+        }
         if (!response.ok) throw new Error(data.error || 'Unable to load booking details right now.');
         const found = (data.bookings ?? []).find((b: BookingApiRecord) => (b._id || b.id) === params.id);
         setBooking(found ?? null);
@@ -91,7 +100,7 @@ export default function BookingDetailPage() {
       <div className="mx-auto max-w-2xl">
         <PageHeader eyebrow="Booking" title="Booking details" backHref="/bookings" />
 
-        {state === 'loading' ? (
+        {bookingAccess?.allowed === false ? <BookingAccessNotice access={bookingAccess} /> : state === 'loading' ? (
           <div className="h-64 animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-slate-200" aria-busy="true" />
         ) : state === 'error' ? (
           <div role="alert" className="ui-card !rounded-2xl !border-amber-200 !bg-amber-50 !shadow-sm">

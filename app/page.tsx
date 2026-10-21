@@ -21,6 +21,8 @@ import { CampusNavbar } from '@/components/ui/CampusNavbar';
 import { calculateDistance } from '@/lib/useGeolocation';
 import { useUserLocation } from '@/lib/LocationContext';
 import type { CampusRouteInfo } from '@/components/Map';
+import { BookingAccessNotice } from '@/components/bookings/BookingAccessNotice';
+import type { BookingAccess } from '@/lib/booking-policy';
 
 const CampusMap = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -80,6 +82,7 @@ export default function Home() {
   const [roomsUnavailable, setRoomsUnavailable] = useState(false);
   const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [homeDataError, setHomeDataError] = useState('');
+  const [bookingAccess, setBookingAccess] = useState<BookingAccess | null>(null);
   const [snap, setSnap] = useState<'peek' | 'half' | 'full'>('half');
   const [reloadKey, setReloadKey] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -148,18 +151,21 @@ export default function Home() {
       const bookingsTask = async () => {
         if (!isAuthenticated) {
           setBookings([]);
+          setBookingAccess(null);
           return '';
         }
         try {
           const response = await fetch('/api/dashboard/overview', { signal });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || 'Your bookings could not be loaded.');
+          setBookingAccess(data.bookingAccess ?? null);
           setBookings(Array.isArray(data.bookings) ? data.bookings : []);
           return '';
-        } catch {
+        } catch (error) {
           if (signal?.aborted) return '';
           setBookings([]);
-          return 'Your booking summary is temporarily unavailable.';
+          setBookingAccess(null);
+          return error instanceof Error ? error.message : 'Your booking summary is temporarily unavailable.';
         }
       };
 
@@ -315,6 +321,9 @@ export default function Home() {
             )}
           </div>
 
+          {bookingAccess?.allowed === false && (
+            <div className="mt-2"><BookingAccessNotice access={bookingAccess} /></div>
+          )}
           {homeDataError ? (
             <div role="alert" className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
               <p className="text-xs leading-relaxed text-amber-900">{homeDataError}</p>

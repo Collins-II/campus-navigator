@@ -6,7 +6,7 @@ import { connectToDatabase } from "@/lib/database";
 import Booking from "@/lib/database/models/Booking";
 import Room from "@/lib/database/models/Room";
 import mongoose from "mongoose";
-import { bookingBody, bookingErrorResponse, BookingPolicyError, parseBookingInput, validateBookingResources } from "@/lib/bookings";
+import { bookingBody, bookingErrorResponse, BookingPolicyError, parseBookingInput, requireStudentBookingAccess, validateBookingResources } from "@/lib/bookings";
 import { requestAdminBookings } from "@/lib/admin-bookings";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -18,6 +18,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    requireStudentBookingAccess(session.user.role);
     if (!mongoose.isObjectIdOrHexString(id)) {
       throw new BookingPolicyError("Booking not found.", 404);
     }
@@ -82,6 +83,7 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
 
+    requireStudentBookingAccess(session.user.role);
     if (!mongoose.isObjectIdOrHexString(id)) throw new BookingPolicyError("Booking not found.", 404);
     await requestAdminBookings(session.user.studentId, "PATCH", {}, id);
     return NextResponse.json({ message: "Booking cancelled successfully." });

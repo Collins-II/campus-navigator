@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { MIN_CIRCLE_BOOKING_MEMBERS } from "@/lib/booking-policy";
 import { connectToDatabase } from "@/lib/database";
-import { apiErrorResponse } from "@/lib/database/errors";
+import { bookingErrorResponse, requireStudentBookingAccess } from "@/lib/bookings";
 import Conversation from "@/lib/database/models/Conversation";
 import type { Types } from "mongoose";
 
@@ -13,6 +13,7 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
+    requireStudentBookingAccess(session.user.role);
     await connectToDatabase();
     const circles = await Conversation.find({ type: "group", members: session.user.id })
       .select("name members").sort({ name: 1 }).lean();
@@ -28,6 +29,6 @@ export async function GET() {
       }),
     }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return apiErrorResponse(error, "bookings.circles", "Unable to verify your Study Circle membership.");
+    return bookingErrorResponse(error, "bookings.circles", "Unable to verify your Study Circle membership.");
   }
 }
